@@ -24,12 +24,20 @@
 
         /* BACKGROUND HANDLING */
         .bg-cover-art {
-            /* Updated URL per request */
             background-image: url('https://kenmorganrealestate.github.io/mygames/2112.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
         }
+        
+        /* Game Over Background */
+        .bg-game-over {
+            background-image: url('https://kenmorganrealestate.github.io/mygames/chromey.jpg?v=999');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
         .bg-deep-space {
             background-color: #000000;
         }
@@ -95,16 +103,17 @@
             background: transparent;
             color: #bf0000;
             border: 2px solid #bf0000;
-            padding: 15px 40px;
-            font-size: 1.5rem;
+            padding: 15px 30px;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
             box-shadow: 0 0 10px #bf0000, inset 0 0 10px #bf0000;
             transition: all 0.3s;
             font-family: 'Orbitron', sans-serif;
-            margin-top: 20px;
+            margin-top: 10px;
             text-shadow: 0 0 5px #bf0000;
+            display: inline-block;
         }
         .rush-button:hover {
             background: #bf0000;
@@ -172,6 +181,63 @@
             background: #000;
             z-index: 100;
         }
+
+        /* --- NEW AUDIO UI ELEMENTS --- */
+        #volume-container {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #bf0000;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 50;
+            box-shadow: 0 0 20px #bf0000;
+        }
+        
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 200px;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px #ffffff;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #bf0000;
+            border-radius: 2px;
+            box-shadow: 0 0 5px #bf0000;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        #mute-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            color: #bf0000;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px #bf0000;
+            border: 1px solid #bf0000;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.8);
+        }
     </style>
 </head>
 <body class="bg-cover-art" id="main-body">
@@ -186,6 +252,15 @@
     <div id="score-hud" class="ui-font hidden">SCORE: <span id="score-val">0</span></div>
     <div id="lives-hud" class="ui-font hidden">LIVES: <span id="lives-val">3</span></div>
 
+    <!-- Volume Slider (Hidden by default) -->
+    <div id="volume-container" class="hidden">
+        <p class="text-red-500 font-bold mb-2 ui-font">MASTER VOLUME</p>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.3">
+    </div>
+
+    <!-- Mute Indicator (Hidden by default) -->
+    <div id="mute-indicator" class="hidden">MUTE ACTIVE</div>
+
     <!-- Start Screen -->
     <div id="start-screen" class="ui-layer interactive hidden">
         <div class="rush-box">
@@ -197,7 +272,9 @@
                 <p>Rotate: <strong>CTRL / ALT</strong></p>
                 <p>Thrust: <strong>DOWN ARROW</strong></p>
                 <p>Fire: <strong>RIGHT ARROW</strong></p>
+                <p>Next Song: <strong>UP ARROW</strong></p>
                 <p>Pause: <strong>SPACE</strong></p>
+                <p class="text-sm mt-2 text-gray-500">Vol: 'V' | Mute: 'M'</p>
             </div>
             
             <button id="start-btn" class="rush-button">INITIALIZE MISSION</button>
@@ -238,7 +315,11 @@
                 <table id="highscore-list-gameover"></table>
             </div>
 
-            <button id="restart-btn" class="rush-button hidden mt-6">RE-ENGAGE</button>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="restart-btn" class="rush-button hidden">RE-ENGAGE</button>
+                <!-- RETURN TO MENU BUTTON -->
+                <button id="return-menu-btn" class="rush-button hidden">RETURN TO MENU</button>
+            </div>
         </div>
     </div>
 
@@ -247,13 +328,9 @@
 <script>
 /**
  * MUSIC MANAGER
- * Handles external audio tracks provided by the user.
  */
 const MusicManager = {
-    // Updated URL
     menuTrack: new Audio('https://kenmorganrealestate.github.io/mygames/overture.mp3'),
-    
-    // Updated Playlist
     playlistUrls: [
         'https://kenmorganrealestate.github.io/mygames/limelight.mp3',
         'https://kenmorganrealestate.github.io/mygames/somethingfornothing.mp3',
@@ -261,41 +338,71 @@ const MusicManager = {
         'https://kenmorganrealestate.github.io/mygames/syrnix.mp3',
         'https://kenmorganrealestate.github.io/mygames/twilightzone.mp3'
     ],
-    
     currentTrack: null,
     isPlayingGameMusic: false,
+    volume: 0.3, 
+    muted: false,
 
     init() {
         this.menuTrack.loop = true;
-        this.menuTrack.volume = 0.5;
+        this.updateVolume();
+        // We can load here, but do not play until user interaction
         this.menuTrack.load();
     },
 
+    setVolume(val) {
+        this.volume = parseFloat(val);
+        this.updateVolume();
+    },
+
+    toggleMute() {
+        this.muted = !this.muted;
+        this.updateVolume();
+        return this.muted;
+    },
+
+    updateVolume() {
+        const effectiveVol = this.muted ? 0 : this.volume;
+        if (this.menuTrack) this.menuTrack.volume = effectiveVol;
+        if (this.currentTrack) this.currentTrack.volume = effectiveVol;
+    },
+
     playMenu() {
+        // CRITICAL: Ensure Game Music is completely stopped before Menu starts
         this.stopGameMusic();
-        const playPromise = this.menuTrack.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.warn("Menu Music Auto-play blocked (User interaction required):", error);
-            });
+        
+        this.updateVolume(); 
+        if (this.menuTrack.paused) {
+            const playPromise = this.menuTrack.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Menu Music Auto-play blocked:", error);
+                });
+            }
         }
     },
 
     stopMenu() {
-        this.menuTrack.pause();
-        this.menuTrack.currentTime = 0;
+        if (!this.menuTrack.paused) {
+            this.menuTrack.pause();
+            this.menuTrack.currentTime = 0;
+        }
     },
 
     playRandomGameTrack() {
+        // CRITICAL: Ensure Menu Music is completely stopped before Game starts
+        this.stopMenu();
+        
         this.isPlayingGameMusic = true;
         const url = this.playlistUrls[Math.floor(Math.random() * this.playlistUrls.length)];
         
+        // Stop existing track if switching
         if (this.currentTrack) {
             this.currentTrack.pause();
         }
 
         this.currentTrack = new Audio(url);
-        this.currentTrack.volume = 0.3; // 30% Volume per instructions
+        this.updateVolume(); // Apply current volume settings to new track
         
         this.currentTrack.addEventListener('ended', () => {
             if (this.isPlayingGameMusic) this.playRandomGameTrack();
@@ -330,6 +437,7 @@ const AudioEngine = {
     ctx: null,
     enabled: true,
     noiseBuffer: null,
+    shipExplosion: new Audio('https://kenmorganrealestate.github.io/mygames/explosion.mp3'),
     
     init() {
         if (!this.ctx) {
@@ -339,6 +447,8 @@ const AudioEngine = {
         if (this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
+        // Preload explosion
+        this.shipExplosion.load();
     },
 
     createNoiseBuffer() {
@@ -468,6 +578,15 @@ const AudioEngine = {
         noise.stop(t + 0.4);
     },
 
+    playShipExplosion() {
+        // Check both global audio enable and mute status
+        if (!this.enabled || MusicManager.muted) return;
+        
+        this.shipExplosion.volume = 0.6; // Set volume relative to music (0.3)
+        this.shipExplosion.currentTime = 0;
+        this.shipExplosion.play().catch(e => console.warn("Explosion SFX error:", e));
+    },
+
     extraLife() {
         if (!this.enabled || !this.ctx) return;
         const now = this.ctx.currentTime;
@@ -499,6 +618,7 @@ const AudioEngine = {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const lfo = this.ctx.createOscillator();
+        
         lfo.frequency.value = 12; 
         lfo.connect(gain.gain);
         
@@ -535,7 +655,7 @@ const STORAGE_KEY = 'morgans_fury_2112_scores';
 const keys = { 
     w: false, a: false, s: false, d: false, ' ': false, 
     ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false,
-    Control: false, Alt: false
+    Control: false, Alt: false, v: false, m: false
 };
 const mouse = { x: 0, y: 0, down: false };
 
@@ -574,10 +694,42 @@ document.getElementById('init-audio-btn').addEventListener('click', () => {
     animate();
 });
 
+// Volume & Mute Controls
+const volumeContainer = document.getElementById('volume-container');
+const volumeSlider = document.getElementById('volume-slider');
+const muteIndicator = document.getElementById('mute-indicator');
+
+volumeSlider.addEventListener('input', (e) => {
+    MusicManager.setVolume(e.target.value);
+});
+
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     if (['ArrowDown', 'ArrowRight', 'ArrowLeft', 'ArrowUp', ' ', 'Alt'].includes(e.key)) e.preventDefault();
+    
+    // Pause
     if (e.key === ' ' && gameState === 'PLAYING') isPaused = !isPaused;
+    
+    // Volume Slider Toggle (V)
+    if (e.key.toLowerCase() === 'v') {
+        volumeContainer.classList.toggle('hidden');
+    }
+
+    // Mute Toggle (M)
+    if (e.key.toLowerCase() === 'm') {
+        const isMuted = MusicManager.toggleMute();
+        if (isMuted) {
+            muteIndicator.classList.remove('hidden');
+        } else {
+            muteIndicator.classList.add('hidden');
+        }
+    }
+    
+    // Next Song (ArrowUp)
+    if (e.key === 'ArrowUp' && gameState === 'PLAYING') {
+        MusicManager.playRandomGameTrack();
+    }
+
     if ((e.key === 'ArrowRight') && gameState === 'PLAYING' && !isPaused && player) player.shoot();
 });
 window.addEventListener('keyup', (e) => {
@@ -609,6 +761,7 @@ canvas.addEventListener('touchend', (e) => { e.preventDefault(); mouse.down = fa
 
 document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('restart-btn').addEventListener('click', startGame);
+document.getElementById('return-menu-btn').addEventListener('click', returnToMenu); 
 document.getElementById('save-score-btn').addEventListener('click', saveHighScore);
 document.getElementById('export-btn').addEventListener('click', exportData);
 document.getElementById('import-btn').addEventListener('click', () => document.getElementById('file-input').click());
@@ -661,6 +814,7 @@ function saveHighScore() {
     
     document.getElementById('high-score-input-container').classList.add('hidden');
     document.getElementById('restart-btn').classList.remove('hidden');
+    document.getElementById('return-menu-btn').classList.remove('hidden'); 
     updateHighScoreUI();
 }
 
@@ -739,10 +893,10 @@ function startWave() {
 
 function startGame() {
     resizeCanvas();
-    MusicManager.playMenu(); 
     MusicManager.playRandomGameTrack(); 
 
     bodyElement.classList.remove('bg-cover-art');
+    bodyElement.classList.remove('bg-game-over'); // Clean up game over just in case
     bodyElement.classList.add('bg-deep-space');
 
     gameState = 'PLAYING';
@@ -769,6 +923,7 @@ function startGame() {
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('high-score-input-container').classList.remove('hidden');
     document.getElementById('restart-btn').classList.add('hidden');
+    document.getElementById('return-menu-btn').classList.add('hidden'); 
     document.getElementById('player-name').value = '';
     document.getElementById('score-hud').classList.remove('hidden');
     document.getElementById('lives-hud').classList.remove('hidden'); 
@@ -777,16 +932,33 @@ function startGame() {
 function gameOver() {
     gameState = 'GAMEOVER';
     MusicManager.stopGameMusic();
-    MusicManager.playMenu(); 
     
     bodyElement.classList.remove('bg-deep-space');
-    bodyElement.classList.add('bg-cover-art');
+    bodyElement.classList.add('bg-game-over'); 
 
     finalScoreElement.innerText = score;
     document.getElementById('game-over-screen').classList.remove('hidden');
     document.getElementById('score-hud').classList.add('hidden');
     document.getElementById('lives-hud').classList.add('hidden');
     updateHighScoreUI();
+}
+
+function returnToMenu() {
+    gameState = 'START';
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+    
+    MusicManager.stopGameMusic();
+    MusicManager.playMenu();
+    
+    updateHighScoreUI();
+    
+    // Clean up Game Over BG
+    bodyElement.classList.remove('bg-game-over');
+    bodyElement.classList.add('bg-cover-art');
+    
+    initStars();
+    resizeCanvas();
 }
 
 function animate() {
@@ -1269,14 +1441,25 @@ class Player {
     }
     die() {
         if (this.iFrames > 0 || !this.visible) return;
+        
         this.visible = false;
         lives--;
         livesElement.innerText = lives;
+        
         addShake(20, 15);
-        AudioEngine.explode();
+        
+        // CHANGED: Use the specific MP3 for ship death
+        AudioEngine.playShipExplosion();
+        
+        // Visuals
         for(let i=0; i<50; i++) particles.push(new Particle(this.x, this.y, '#fff', 8));
-        if (lives < 0) gameOver();
-        else respawnTimer = 120; 
+        
+        if (lives < 0) {
+            gameOver();
+        } else {
+            // Prepare respawn
+            respawnTimer = 120; 
+        }
     }
     resetPosition() {
         this.x = canvas.width / 2;
