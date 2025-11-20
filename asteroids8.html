@@ -727,10 +727,8 @@ class Saucer {
             this.radius = 12;
             this.color = '#ff4444'; 
             this.points = 1000;
-            // DYNAMIC DIFFICULTY (ADJUSTED):
             this.accuracy = 0.02 * Math.pow(0.9, level - 1); 
             
-            // UPDATED: Speed cap at 0.9x until Level 10
             let speedBase = 0.9;
             let levelBonus = 0;
             if (level >= 10) {
@@ -766,7 +764,6 @@ class Saucer {
         this.y += this.vy;
         this.changeDirTimer++;
         
-        // Erratic Movement Logic
         let dirChangeBase = this.type === 'small' ? 40 : 70;
         const dirChangeThresh = Math.max(15, dirChangeBase - (level * 3));
         
@@ -783,9 +780,7 @@ class Saucer {
         }
 
         this.shootTimer++;
-        // ANTI-FARMING (ADJUSTED): 
         let baseRate = this.type === 'small' ? 60 : 100;
-        // Slower fire rate increase
         const shootThresh = Math.max(30, baseRate - (level * 2) - (saucersSpawnedCount * 1));
         
         if (this.shootTimer > shootThresh) {
@@ -807,7 +802,6 @@ class Saucer {
         ctx.shadowColor = this.color;
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;
-        // Vector Saucer
         ctx.beginPath();
         ctx.arc(0, -this.radius*0.25, this.radius*0.5, Math.PI, 0); 
         ctx.moveTo(-this.radius, this.radius*0.25);
@@ -1093,6 +1087,10 @@ const StatsManager = {
     },
     
     saveToCareer(name) {
+        // Force reload from storage to ensure we don't overwrite other updates
+        const stored = localStorage.getItem('morgans_fury_2112_career');
+        this.careerData = stored ? JSON.parse(stored) : {};
+
         if(!this.careerData[name]) {
             this.careerData[name] = {
                 totalShots: 0, totalHits: 0, asteroids: 0,
@@ -1125,9 +1123,6 @@ const MusicManager = {
     menuTrack: new Audio('https://kenmorganrealestate.github.io/mygames/overture.mp3'),
     playlistUrls: [
         'https://kenmorganrealestate.github.io/mygames/limelight.mp3',
-        'https://kenmorganrealestate.github.io/mygames/bangkok.mp3',
-        'https://kenmorganrealestate.github.io/mygames/anthem.mp3',
-        'https://kenmorganrealestate.github.io/mygames/bestican.mp3',
         'https://kenmorganrealestate.github.io/mygames/somethingfornothing.mp3',
         'https://kenmorganrealestate.github.io/mygames/stickitout.mp3',
         'https://kenmorganrealestate.github.io/mygames/syrnix.mp3',
@@ -1251,7 +1246,8 @@ const AudioEngine = {
     
     // Short burst of static for "Crackle" effect
     playSpark() {
-        if (!this.enabled || !this.ctx || MusicManager.muted) return;
+        // Removed MusicManager.muted check - plays always
+        if (!this.enabled || !this.ctx) return;
         const t = this.ctx.currentTime;
         const noise = this.ctx.createBufferSource();
         noise.buffer = this.noiseBuffer;
@@ -1319,7 +1315,7 @@ const AudioEngine = {
         osc.start(); osc.stop(this.ctx.currentTime + 0.2);
     },
     startThrust() {
-        if (!this.enabled) return; // Removed MusicManager.muted check
+        if (!this.enabled) return; // Removed MusicManager.muted check - plays always
         if (this.rocketSound.paused) {
             this.rocketSound.play().catch(e => {});
         }
@@ -1474,32 +1470,6 @@ muteBtn.addEventListener('click', () => {
 document.getElementById('toggle-controls-btn').addEventListener('click', () => {
     const controls = document.getElementById('mobile-controls');
     controls.classList.toggle('hidden');
-});
-
-// Help Toggle Logic
-document.getElementById('help-btn').addEventListener('click', () => {
-    const modal = document.getElementById('help-modal');
-    const start = document.getElementById('start-screen');
-    
-    if (gameState === 'PLAYING') {
-        isPaused = true;
-        modal.classList.remove('hidden');
-    } else if (gameState === 'START') {
-        start.classList.add('hidden');
-        modal.classList.remove('hidden');
-    }
-});
-
-document.getElementById('close-help-btn').addEventListener('click', () => {
-    const modal = document.getElementById('help-modal');
-    const start = document.getElementById('start-screen');
-    
-    modal.classList.add('hidden');
-    if (gameState === 'PLAYING') {
-        isPaused = false;
-    } else if (gameState === 'START') {
-        start.classList.remove('hidden');
-    }
 });
 
 const btnLeft = document.getElementById('btn-left');
