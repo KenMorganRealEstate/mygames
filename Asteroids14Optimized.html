@@ -13,13 +13,12 @@
         body {
             margin: 0; overflow: hidden; background-color: #000;
             font-family: 'Orbitron', sans-serif;
-            touch-action: none; /* CRITICAL: Disables browser zooming/panning */
-            user-select: none; -webkit-user-select: none;
+            touch-action: none; user-select: none; -webkit-user-select: none;
             overscroll-behavior: none;
         }
         canvas { display: block; }
 
-        /* --- BACKGROUNDS --- */
+        /* --- VISUALS --- */
         .bg-cover-art {
             background-image: url('https://kenmorganrealestate.github.io/mygames/2112.jpg?v=999');
             background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #000;
@@ -30,7 +29,7 @@
         }
         .bg-deep-space { background-color: #000000; }
 
-        /* --- UI STYLES --- */
+        /* --- UI --- */
         .title-font { font-family: 'Cinzel Decorative', cursive; font-weight: 900; color: #bf0000; text-shadow: 0 0 5px #fff, 0 0 10px #bf0000; }
         .ui-font { font-family: 'Orbitron', sans-serif; }
         
@@ -66,12 +65,10 @@
             user-select: none; -webkit-user-select: none;
             touch-action: none;
             backdrop-filter: blur(2px);
-            z-index: 9999; /* TOP LAYER */
-            pointer-events: auto; /* MUST BE AUTO */
+            z-index: 9999; 
+            pointer-events: auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
-        
-        /* Visual Feedback when Pressed */
         .drag-btn.pressed {
             background-color: rgba(255, 0, 0, 0.8) !important;
             border-color: #ff0000 !important;
@@ -81,15 +78,10 @@
 
         /* Edit Mode Styles */
         .edit-mode .drag-btn {
-            border-color: #00ff00;
-            border-style: dashed;
-            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00; border-style: dashed; background: rgba(0, 255, 0, 0.2);
             animation: pulse-border 1s infinite;
-            cursor: grab;
         }
-        @keyframes pulse-border {
-            0% { border-color: #00ff00; } 50% { border-color: #fff; } 100% { border-color: #00ff00; }
-        }
+        @keyframes pulse-border { 0% { border-color: #00ff00; } 50% { border-color: #fff; } 100% { border-color: #00ff00; } }
 
         /* --- SWITCHES --- */
         .toggle-row { display: flex; justify-content: space-between; width: 100%; margin-bottom: 12px; align-items: center; }
@@ -106,9 +98,12 @@
         #lives-hud { right: 20px; }
         #level-hud { left: 50%; transform: translateX(-50%); }
 
-        /* FX */
-        #crt-layer { pointer-events: none; }
-        #sparks-container { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+        /* FX: CRT & Sparks */
+        #crt-layer { pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 90; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%); background-size: 100% 4px; opacity: 0; }
+        .crt-active { animation: scanline-fade 4s ease-out forwards; }
+        @keyframes scanline-fade { 0% { opacity: 1; } 100% { opacity: 0; } }
+        
+        #sparks-container { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 1; }
         .spark { position: absolute; width: 5px; height: 5px; background: orange; border-radius: 50%; animation: floatUp 2s linear forwards; }
         @keyframes floatUp { to { transform: translateY(-100vh); opacity: 0; } }
     </style>
@@ -128,23 +123,16 @@
     <div id="lives-hud" class="ui-font hidden">LIVES: <span id="lives-val">3</span></div>
 
     <div id="touch-interface" class="hidden" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 9000; pointer-events: none;">
-        
         <div id="btn-left" class="drag-btn" style="bottom: 120px; left: 20px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </div>
-        
         <div id="btn-right" class="drag-btn" style="bottom: 120px; left: 110px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
         </div>
-        
         <div id="btn-thrust" class="drag-btn" style="bottom: 30px; left: 65px; width: 85px; height: 85px; border-color: #fff;">🚀</div>
-        
         <div id="btn-fire" class="drag-btn" style="bottom: 40px; right: 30px; width: 90px; height: 90px; border-color: #ff4444; color: #ff4444;">🔥</div>
-        
         <div id="btn-hyperspace" class="drag-btn" style="bottom: 150px; right: 40px; border-color: #a0a0ff; color: #a0a0ff;">⚡</div>
-        
         <div id="btn-pause" class="drag-btn" style="top: 20px; left: 20px; width: 50px; height: 50px; font-size: 1rem;">II</div>
-        
         <div id="btn-music" class="drag-btn" style="top: 20px; right: 20px; width: 50px; height: 50px; font-size: 1rem;">♫</div>
     </div>
 
@@ -193,34 +181,33 @@
 
 <script>
 /**
- * MORGAN'S FURY 2112 - FIXED CONTROLS
+ * MORGAN'S FURY 2112 - COMPLETE
  */
 
-// --- GLOBAL VARIABLES ---
+// --- VARIABLES ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const STORAGE_KEY = 'morgans_fury_scores';
 
-// State Flags
 let gameState = 'INIT_WAIT';
 let isPaused = false;
-let isEditMode = false; // Controls Drag vs Click
+let isEditMode = false;
 
-// Game Data
 let score = 0;
 let lives = 3;
 let level = 1;
 let saucersSpawnedCount = 0;
 let saucer = null;
 let saucerTimer = 0;
+let nextLifeThreshold = 10000;
+let shakeDuration = 0;
+let shakeMagnitude = 0;
 
-// Inputs
 const keys = { 
     ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, 
     Control: false, Alt: false, Shift: false, ' ': false 
 };
 
-// Entities
 let player;
 let projectiles = [];
 let enemyProjectiles = [];
@@ -234,187 +221,261 @@ let floatingTexts = [];
 class FloatingText {
     constructor(x, y, text, color = '#fff') {
         this.x = x; this.y = y; this.text = text; this.color = color;
-        this.life = 60; this.vy = -1;
+        this.life = 90; this.vy = -1;
     }
     update() { this.y += this.vy; this.life--; }
     draw() {
-        ctx.save(); ctx.globalAlpha = Math.min(1, this.life/20);
-        ctx.fillStyle = this.color; ctx.font = 'bold 20px Orbitron';
-        ctx.fillText(this.text, this.x, this.y); ctx.restore();
+        ctx.save(); ctx.globalAlpha = Math.min(1, this.life / 30);
+        ctx.fillStyle = this.color; ctx.font = 'bold 24px Orbitron';
+        ctx.textAlign = 'center'; ctx.fillText(this.text, this.x, this.y); ctx.restore();
     }
 }
 
 class Star {
-    constructor(mode = 'static') { this.init(mode); }
-    init(mode) {
+    constructor(mode = 'static') {
+        this.mode = mode; this.layer = Math.floor(Math.random() * 3); this.init();
+    }
+    init() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2;
-        this.alpha = Math.random();
-        this.speed = (mode === 'warp') ? 15 : 0;
+        if (this.mode === 'warp') {
+            this.x = (Math.random() - 0.5) * canvas.width;
+            this.y = (Math.random() - 0.5) * canvas.height;
+            this.z = Math.random() * canvas.width;
+            this.pz = this.z;
+        }
+        if (this.layer === 0) { this.size = 1; this.alphaBase = 0.3; }
+        else if (this.layer === 1) { this.size = 1.5; this.alphaBase = 0.6; }
+        else { this.size = 2; this.alphaBase = 1.0; }
+        this.alpha = this.alphaBase;
     }
     update() {
-        if(this.speed > 0) {
-            this.x -= this.speed;
-            if(this.x < 0) this.x = canvas.width;
+        if (this.mode === 'warp') {
+            let speed = 20; if (this.layer === 0) speed = 10; if (this.layer === 1) speed = 15;
+            this.z = this.z - speed;
+            if (this.z < 1) {
+                this.z = canvas.width; this.x = (Math.random() - 0.5) * canvas.width; this.y = (Math.random() - 0.5) * canvas.height;
+            }
         }
     }
     draw() {
-        ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+        if (this.mode === 'warp') {
+            const sx = (this.x / this.z) * (canvas.width/2) + (canvas.width/2);
+            const sy = (this.y / this.z) * (canvas.height/2) + (canvas.height/2);
+            const r = (1 - this.z / canvas.width) * (this.size * 2);
+            ctx.fillStyle = `rgba(255,255,255,${this.layer === 0 ? 0.5 : 1})`;
+            ctx.beginPath(); ctx.arc(sx, sy, Math.max(0, r), 0, Math.PI * 2); ctx.fill();
+        } else {
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+}
+
+class Projectile {
+    constructor(x, y, angle, isEnemy = false) {
+        this.x = x; this.y = y; this.radius = 2;
+        this.speed = isEnemy ? 8 : 14;
+        this.vx = Math.cos(angle) * this.speed;
+        this.vy = Math.sin(angle) * this.speed;
+        this.color = isEnemy ? '#ff0000' : '#ffffff';
+        this.isEnemy = isEnemy;
+        this.markedForDeletion = false;
+        this.lifespan = 55;
+        
+        if (isEnemy) { if (AudioEngine && typeof AudioEngine.saucerFire === 'function') AudioEngine.saucerFire(); } 
+        else { if (AudioEngine && typeof AudioEngine.shoot === 'function') AudioEngine.shoot(); }
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy; this.lifespan--;
+        if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
+        if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+        if (this.lifespan <= 0) this.markedForDeletion = true;
+    }
+    draw() {
+        ctx.save(); ctx.shadowBlur = 5; ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+}
+
+class Saucer {
+    constructor(type = 'large') {
+        this.type = type; 
+        if (type === 'small') {
+            this.radius = 12; this.color = '#ff4444'; this.points = 1000; this.accuracy = 0.02 * Math.pow(0.9, level - 1);
+            let speedBase = 0.9; let levelBonus = (level >= 10) ? (level - 10) * 0.1 : 0;
+            this.speedMult = speedBase + levelBonus;
+        } else {
+            this.radius = 25; this.color = '#ff4444'; this.points = 500; this.accuracy = 0.25 * Math.pow(0.9, level - 1);
+            this.speedMult = Math.min(1.3, 1.0 + (level * 0.02));
+        }
+        this.y = Math.random() * (canvas.height - 100) + 50;
+        if (Math.random() < 0.5) { this.x = -30; this.vx = (3 + Math.random()) * this.speedMult; } 
+        else { this.x = canvas.width + 30; this.vx = -(3 + Math.random()) * this.speedMult; }
+        this.vy = (Math.random() - 0.5) * 2; 
+        this.changeDirTimer = 0; this.shootTimer = 0; this.markedForDeletion = false;
+        AudioEngine.saucerSpawn();
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy; this.changeDirTimer++;
+        if (this.changeDirTimer > 70) { this.vy = (Math.random() - 0.5) * 5; this.changeDirTimer = 0; }
+        if (this.y < -this.radius) this.y = canvas.height + this.radius;
+        if (this.y > canvas.height + this.radius) this.y = -this.radius;
+        if ((this.vx > 0 && this.x > canvas.width + 50) || (this.vx < 0 && this.x < -50)) {
+            this.markedForDeletion = true; AudioEngine.stopSaucerSound();
+        }
+        this.shootTimer++;
+        if (this.shootTimer > 100) { this.shoot(); this.shootTimer = 0; }
+    }
+    shoot() {
+        if (!player) return;
+        const angle = Math.atan2(player.y - this.y, player.x - this.x);
+        enemyProjectiles.push(new Projectile(this.x, this.y + 5, angle, true));
+    }
+    draw() {
+        // ORIGINAL SAUCER DRAWING CODE
+        ctx.save(); ctx.translate(this.x, this.y);
+        ctx.shadowBlur = 10; ctx.shadowColor = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -this.radius*0.25, this.radius*0.5, Math.PI, 0); 
+        ctx.moveTo(-this.radius, this.radius*0.25); ctx.lineTo(this.radius, this.radius*0.25);
+        ctx.lineTo(this.radius*0.75, this.radius*0.6); ctx.lineTo(-this.radius*0.75, this.radius*0.6);
+        ctx.closePath(); ctx.stroke();
+        ctx.fillStyle = '#000'; ctx.fill(); 
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(-this.radius*0.5, this.radius*0.25, 2, 0, Math.PI*2);
+        ctx.arc(0, this.radius*0.25, 2, 0, Math.PI*2); ctx.arc(this.radius*0.5, this.radius*0.25, 2, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Asteroid {
+    constructor(x, y, sizeClass) {
+        this.sizeClass = sizeClass; this.radius = sizeClass * 12 + 5;
+        this.x = x; this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (4 - sizeClass) * 1.0;
+        this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+        this.rotation = 0; this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+        this.color = '#ffffff'; this.markedForDeletion = false;
+        this.points = [];
+        const vertices = 8 + Math.floor(Math.random() * 6);
+        for (let i = 0; i < vertices; i++) {
+            const angle = (Math.PI * 2 / vertices) * i;
+            const r = this.radius * (0.7 + Math.random() * 0.6);
+            this.points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+        }
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy; this.rotation += this.rotationSpeed;
+        if (this.x < -this.radius) this.x = canvas.width + this.radius;
+        if (this.x > canvas.width + this.radius) this.x = -this.radius;
+        if (this.y < -this.radius) this.y = canvas.height + this.radius;
+        if (this.y > canvas.height + this.radius) this.y = -this.radius;
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+        ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.shadowBlur = 8; ctx.shadowColor = '#fff'; 
+        ctx.beginPath(); ctx.moveTo(this.points[0].x, this.points[0].y);
+        for (let i = 1; i < this.points.length; i++) ctx.lineTo(this.points[i].x, this.points[i].y);
+        ctx.closePath(); ctx.stroke(); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
     }
 }
 
 class Player {
     constructor() {
-        this.x = canvas.width/2; this.y = canvas.height/2;
+        this.x = canvas.width / 2; this.y = canvas.height / 2;
+        this.radius = 15; this.angle = -Math.PI / 2; 
         this.vx = 0; this.vy = 0;
-        this.angle = -Math.PI/2;
-        this.radius = 15;
-        this.visible = true;
-        this.thrusting = false;
+        this.acceleration = 0.15; this.friction = 0.99; this.rotationSpeed = 0.08;
+        this.visible = true; this.iFrames = 120; this.thrusting = false;
+    }
+    hyperspace() {
+        if (!this.visible) return;
+        this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+        this.vx = 0; this.vy = 0;
+        AudioEngine.playWarp();
+        const body = document.getElementById('main-body');
+        body.style.backgroundColor = '#fff'; setTimeout(() => { body.style.backgroundColor = '#000'; }, 100);
     }
     update() {
-        if(!this.visible) return;
-        if(keys.Control) this.angle -= 0.08;
-        if(keys.Alt) this.angle += 0.08;
-        this.thrusting = keys.ArrowDown;
-        
-        if(this.thrusting) {
-            this.vx += Math.cos(this.angle) * 0.15;
-            this.vy += Math.sin(this.angle) * 0.15;
-            if(Math.random()>0.5) particles.push(new Particle(this.x - Math.cos(this.angle)*15, this.y - Math.sin(this.angle)*15, '#ffaa00'));
+        if (!this.visible) { AudioEngine.stopThrust(); return; }
+        if (keys.Control) this.angle -= this.rotationSpeed;
+        if (keys.Alt) this.angle += this.rotationSpeed;
+        this.thrusting = false;
+        if (keys.ArrowDown) { 
+            this.thrusting = true;
+            this.vx += Math.cos(this.angle) * this.acceleration;
+            this.vy += Math.sin(this.angle) * this.acceleration;
             AudioEngine.startThrust();
+            if (Math.random() > 0.5) {
+                const backAngle = this.angle + Math.PI + (Math.random() - 0.5) * 0.5;
+                particles.push(new Particle(this.x + Math.cos(backAngle)*this.radius, this.y + Math.sin(backAngle)*this.radius, '#ffaa00', 3)); 
+            }
         } else {
             AudioEngine.stopThrust();
         }
-        this.vx *= 0.99; this.vy *= 0.99;
+        if (keys.Shift) { keys.Shift = false; this.hyperspace(); }
+        this.vx *= this.friction; this.vy *= this.friction;
         this.x += this.vx; this.y += this.vy;
-        if(this.x < -15) this.x = canvas.width+15; if(this.x > canvas.width+15) this.x = -15;
-        if(this.y < -15) this.y = canvas.height+15; if(this.y > canvas.height+15) this.y = -15;
+        if (this.x < -this.radius) this.x = canvas.width + this.radius;
+        if (this.x > canvas.width + this.radius) this.x = -this.radius;
+        if (this.y < -this.radius) this.y = canvas.height + this.radius;
+        if (this.y > canvas.height + this.radius) this.y = -this.radius;
+        if (this.iFrames > 0) this.iFrames--;
+    }
+    shoot() {
+        if (!this.visible) return; 
+        this.vx -= Math.cos(this.angle) * 0.2; this.vy -= Math.sin(this.angle) * 0.2;
+        const tipX = this.x + Math.cos(this.angle) * (this.radius + 5);
+        const tipY = this.y + Math.sin(this.angle) * (this.radius + 5);
+        projectiles.push(new Projectile(tipX, tipY, this.angle, false));
     }
     draw() {
-        if(!this.visible) return;
+        if (!this.visible) return; 
+        if (this.iFrames > 0 && Math.floor(Date.now() / 100) % 2 === 0) return; 
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillStyle = '#000';
-        ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-15, 12); ctx.lineTo(-10,0); ctx.lineTo(-15,-12); ctx.closePath();
+        ctx.shadowBlur = 10; ctx.shadowColor = '#fff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-15, 12); ctx.lineTo(-10, 0); ctx.lineTo(-15, -12); ctx.closePath();
         ctx.fill(); ctx.stroke();
-        if(this.thrusting) {
-            ctx.fillStyle = '#ffaa00';
-            ctx.beginPath(); ctx.moveTo(-12,6); ctx.lineTo(-25 - Math.random()*5, 0); ctx.lineTo(-12,-6); ctx.fill();
+        if (this.thrusting) {
+            ctx.fillStyle = '#ffaa00'; ctx.shadowColor = '#ffaa00';
+            ctx.beginPath(); ctx.moveTo(-12, 6); ctx.lineTo(-25 - Math.random() * 10, 0); ctx.lineTo(-12, -6); ctx.fill();
         }
         ctx.restore();
     }
-    shoot() {
-        if(!this.visible) return;
-        projectiles.push(new Projectile(this.x + Math.cos(this.angle)*20, this.y + Math.sin(this.angle)*20, this.angle));
-        AudioEngine.shoot();
+    die() {
+        if (this.iFrames > 0 || !this.visible) return;
+        this.visible = false; AudioEngine.stopThrust();
+        lives--; document.getElementById('lives-val').innerText = lives;
+        shakeDuration = 20; shakeMagnitude = 15;
+        AudioEngine.playShipExplosion();
+        for(let i=0; i<50; i++) particles.push(new Particle(this.x, this.y, '#fff', 8));
+        if (lives < 0) gameOver(); else setTimeout(() => player.resetPosition(), 2000);
     }
-    hyperspace() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = 0; this.vy = 0;
-        AudioEngine.playWarp();
-    }
-}
-
-class Projectile {
-    constructor(x, y, angle, isEnemy=false) {
-        this.x = x; this.y = y;
-        this.speed = isEnemy ? 8 : 14;
-        this.vx = Math.cos(angle) * this.speed;
-        this.vy = Math.sin(angle) * this.speed;
-        this.life = 60;
-        this.color = isEnemy ? '#f00' : '#fff';
-    }
-    update() {
-        this.x += this.vx; this.y += this.vy; this.life--;
-        if(this.x < 0) this.x = canvas.width; if(this.x > canvas.width) this.x = 0;
-        if(this.y < 0) this.y = canvas.height; if(this.y > canvas.height) this.y = 0;
-    }
-    draw() {
-        ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
-    }
-}
-
-class Saucer {
-    constructor() {
-        this.radius = 20;
-        this.y = Math.random() * (canvas.height - 100) + 50;
-        this.x = (Math.random() < 0.5) ? -30 : canvas.width + 30;
-        this.vx = (this.x < 0) ? 2 + Math.random() : -2 - Math.random();
-        this.vy = (Math.random()-0.5)*2;
-        this.markedForDeletion = false;
-        this.timer = 0;
-        AudioEngine.saucerSpawn();
-    }
-    update() {
-        this.x += this.vx; this.y += this.vy;
-        this.timer++;
-        if(this.timer > 100) {
-            if(player && player.visible) {
-                const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                enemyProjectiles.push(new Projectile(this.x, this.y, angle, true));
-                AudioEngine.saucerFire();
-            }
-            this.timer = 0;
-        }
-        if((this.vx > 0 && this.x > canvas.width + 50) || (this.vx < 0 && this.x < -50)) {
-            this.markedForDeletion = true;
-            AudioEngine.stopSaucerSound();
-        }
-    }
-    draw() {
-        ctx.strokeStyle = '#f00'; ctx.lineWidth = 2;
-        ctx.beginPath(); 
-        ctx.moveTo(this.x-15, this.y); ctx.lineTo(this.x+15, this.y);
-        ctx.moveTo(this.x-8, this.y-8); ctx.lineTo(this.x+8, this.y-8); ctx.lineTo(this.x+15, this.y);
-        ctx.lineTo(this.x-15, this.y); ctx.lineTo(this.x-8, this.y-8);
-        ctx.stroke();
-    }
-}
-
-class Asteroid {
-    constructor(x, y, size) {
-        this.x = x; this.y = y; this.size = size; 
-        this.radius = size * 15;
-        const angle = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(angle) * (1 + Math.random());
-        this.vy = Math.sin(angle) * (1 + Math.random());
-        this.points = [];
-        const v = 8 + Math.random() * 4;
-        for(let i=0; i<v; i++) {
-            this.points.push((this.radius * 0.7) + Math.random() * (this.radius * 0.3));
-        }
-    }
-    update() {
-        this.x += this.vx; this.y += this.vy;
-        if(this.x < -50) this.x = canvas.width+50; if(this.x > canvas.width+50) this.x = -50;
-        if(this.y < -50) this.y = canvas.height+50; if(this.y > canvas.height+50) this.y = -50;
-    }
-    draw() {
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath();
-        for(let i=0; i<this.points.length; i++) {
-            const a = (Math.PI*2 / this.points.length) * i;
-            const r = this.points[i];
-            const px = Math.cos(a)*r; const py = Math.sin(a)*r;
-            if(i===0) ctx.moveTo(this.x+px, this.y+py); else ctx.lineTo(this.x+px, this.y+py);
-        }
-        ctx.closePath(); ctx.stroke();
+    resetPosition() {
+        this.x = canvas.width / 2; this.y = canvas.height / 2;
+        this.vx = 0; this.vy = 0; this.angle = -Math.PI / 2;
+        this.visible = true; this.iFrames = 180; 
+        asteroids.forEach(a => { if (Math.hypot(this.x-a.x, this.y-a.y) < 150) a.x += (a.x < this.x ? -200 : 200); });
     }
 }
 
 class Particle {
-    constructor(x, y, color) {
+    constructor(x, y, color, speed) {
         this.x = x; this.y = y; this.color = color;
-        this.vx = (Math.random()-0.5)*4; this.vy = (Math.random()-0.5)*4;
-        this.life = 1.0;
+        const angle = Math.random() * Math.PI * 2; const velocity = Math.random() * speed;
+        this.vx = Math.cos(angle) * velocity; this.vy = Math.sin(angle) * velocity;
+        this.alpha = 1; this.decay = 0.015 + Math.random() * 0.02;
     }
-    update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.05; }
-    draw() { ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
+    update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
+    draw() {
+        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, Math.random()*2+1, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
 }
 
-// --- AUDIO SYSTEM (FULL RESTORATION) ---
+// --- AUDIO (RESTORED ORIGINAL) ---
 const MusicManager = {
     menuTrack: new Audio('https://kenmorganrealestate.github.io/mygames/overture.mp3'),
     playlistUrls: [
@@ -427,132 +488,119 @@ const MusicManager = {
     outroTrack: new Audio('https://kenmorganrealestate.github.io/mygames/outro2112.mp3'),
     currentTrack: null,
     isPlayingGameMusic: false,
-    volume: 0.3, 
-    init() {
-        this.menuTrack.loop = true;
-        this.menuTrack.volume = this.volume;
-    },
-    playMenu() {
-        this.stopGameMusic(); this.stopOutro();
-        this.menuTrack.play().catch(e=>console.log(e));
-    },
-    stopMenu() { this.menuTrack.pause(); this.menuTrack.currentTime = 0; },
+    init() { this.menuTrack.loop = true; this.menuTrack.load(); },
+    playMenu() { this.stopGameMusic(); this.stopOutro(); this.menuTrack.play().catch(e=>{}); },
     playRandomGameTrack() {
-        this.stopMenu();
-        if(this.currentTrack) this.currentTrack.pause();
+        this.menuTrack.pause(); this.outroTrack.pause();
         const url = this.playlistUrls[Math.floor(Math.random()*this.playlistUrls.length)];
+        if(this.currentTrack) this.currentTrack.pause();
         this.currentTrack = new Audio(url);
-        this.currentTrack.volume = this.volume;
-        this.currentTrack.play().catch(e=>console.log(e));
+        this.currentTrack.volume = 0.3;
+        this.currentTrack.play().catch(e=>{});
         this.currentTrack.onended = () => this.playRandomGameTrack();
-        
-        // Show visual feedback
-        const name = url.split('/').pop().replace('.mp3', '').toUpperCase();
-        floatingTexts.push(new FloatingText(canvas.width/2, 50, "PLAYING: " + name, "#00ff00"));
+        floatingTexts.push(new FloatingText(canvas.width/2, 60, "NOW PLAYING", "#00ff00"));
     },
-    stopGameMusic() { if(this.currentTrack) { this.currentTrack.pause(); } },
-    playOutro() { this.stopGameMusic(); this.stopMenu(); this.outroTrack.play().catch(e=>console.log(e)); },
-    stopOutro() { this.outroTrack.pause(); this.outroTrack.currentTime = 0; }
+    stopGameMusic() { if(this.currentTrack) this.currentTrack.pause(); },
+    playOutro() { this.stopGameMusic(); this.menuTrack.pause(); this.outroTrack.play().catch(e=>{}); },
+    stopOutro() { this.outroTrack.pause(); this.outroTrack.currentTime=0; }
 };
 
 const AudioEngine = {
-    ctx: null,
+    ctx: null, noiseBuffer: null, explosionBuffer: null,
     rocketSound: new Audio('https://kenmorganrealestate.github.io/mygames/rocket.mp3'),
-    saucerSound: new Audio('https://kenmorganrealestate.github.io/mygames/2112Ringtone.mp3'),
-    init() { 
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+    saucerEntry: new Audio('https://kenmorganrealestate.github.io/mygames/2112Ringtone.mp3'),
+    init() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.rocketSound.loop = true; this.rocketSound.volume = 0.5;
-        this.saucerSound.loop = true; this.saucerSound.volume = 0.6;
+        this.saucerEntry.loop = true; this.saucerEntry.volume = 0.6;
+        this.createNoiseBuffer(); this.loadExplosion();
     },
-    tone(freq, type, dur, vol=0.1) {
-        if(!this.ctx) return;
+    createNoiseBuffer() {
+        const bufferSize = this.ctx.sampleRate * 2;
+        this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = this.noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    },
+    loadExplosion() {
+        fetch('https://kenmorganrealestate.github.io/mygames/explosion.mp3')
+            .then(r=>r.arrayBuffer()).then(b=>this.ctx.decodeAudioData(b)).then(a=>{this.explosionBuffer=a;});
+    },
+    playShipExplosion() {
+        if(this.explosionBuffer) {
+            const s = this.ctx.createBufferSource(); s.buffer = this.explosionBuffer;
+            const g = this.ctx.createGain(); g.gain.value=0.8;
+            s.connect(g); g.connect(this.ctx.destination); s.start(0);
+        }
+    },
+    explode() { this.playShipExplosion(); },
+    playWarp() {
+        const t = this.ctx.currentTime;
         const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-        o.type = type; o.frequency.value = freq;
         o.connect(g); g.connect(this.ctx.destination);
-        g.gain.setValueAtTime(vol, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + dur);
-        o.start(); o.stop(this.ctx.currentTime + dur);
+        o.frequency.setValueAtTime(200, t); o.frequency.exponentialRampToValueAtTime(2000, t+0.1);
+        g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.5);
+        o.start(); o.stop(t+0.5);
     },
-    shoot() { this.tone(880, 'sawtooth', 0.15); },
-    explode() { 
-        this.tone(100, 'square', 0.4, 0.3);
-        this.tone(50, 'sawtooth', 0.4, 0.3);
-    },
-    playWarp() { 
-        this.tone(500, 'sine', 0.5, 0.2); 
-        this.tone(1500, 'sine', 0.5, 0.1); 
+    shoot() {
+        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        o.connect(g); g.connect(this.ctx.destination); o.type='sawtooth';
+        o.frequency.setValueAtTime(880, this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(110, this.ctx.currentTime+0.2);
+        g.gain.setValueAtTime(0.1, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.2);
+        o.start(); o.stop(this.ctx.currentTime+0.2);
     },
     startThrust() { if(this.rocketSound.paused) this.rocketSound.play().catch(e=>{}); },
     stopThrust() { if(!this.rocketSound.paused) { this.rocketSound.pause(); this.rocketSound.currentTime=0; } },
-    saucerSpawn() { this.saucerSound.play().catch(e=>{}); },
-    stopSaucerSound() { this.saucerSound.pause(); this.saucerSound.currentTime=0; },
-    saucerFire() { this.tone(1200, 'sine', 0.1, 0.2); }
+    saucerSpawn() { this.saucerEntry.play().catch(e=>{}); },
+    stopSaucerSound() { this.saucerEntry.pause(); this.saucerEntry.currentTime=0; },
+    saucerFire() { 
+        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        o.type='sine'; o.frequency.value=800; o.connect(g); g.connect(this.ctx.destination);
+        g.gain.value=0.1; o.start(); o.stop(this.ctx.currentTime+0.1);
+    }
 };
 
-// --- TOUCH INTERFACE LOGIC ---
-
+// --- TOUCH LOGIC (FIXED) ---
 const touchInterface = document.getElementById('touch-interface');
 const touchToggle = document.getElementById('touch-toggle');
 const editToggle = document.getElementById('edit-toggle');
 const dragButtons = document.querySelectorAll('.drag-btn');
 
-// 1. Dragging Logic (Edit Mode Only)
 function setupDrag(el) {
     let offsetX, offsetY;
     el.addEventListener('pointerdown', (e) => {
         if(!isEditMode) return;
         el.setPointerCapture(e.pointerId);
         const rect = el.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
+        offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
         el.dataset.dragging = "true";
     });
-
     el.addEventListener('pointermove', (e) => {
         if(!isEditMode || el.dataset.dragging !== "true") return;
         el.style.left = (e.clientX - offsetX) + 'px';
         el.style.top = (e.clientY - offsetY) + 'px';
         el.style.bottom = 'auto'; el.style.right = 'auto';
     });
-
-    el.addEventListener('pointerup', (e) => {
-        el.dataset.dragging = "false";
-        el.releasePointerCapture(e.pointerId);
-    });
+    el.addEventListener('pointerup', (e) => { el.dataset.dragging = "false"; el.releasePointerCapture(e.pointerId); });
 }
 
-// 2. Game Action Logic (Play Mode Only)
 function setupGameAction(id, keyMap) {
     const el = document.getElementById(id);
-    
     const press = (e) => {
-        if(isEditMode) return; // Ignore clicks in edit mode
-        e.preventDefault(); 
-        el.classList.add('pressed'); 
-        
+        if(isEditMode) return; e.preventDefault(); el.classList.add('pressed'); 
         if(keyMap === 'SHOOT') { if(player && !isPaused) player.shoot(); } 
         else if (keyMap === 'HYPERSPACE') { if(player && !isPaused) player.hyperspace(); } 
         else if (keyMap === 'PAUSE') { isPaused = !isPaused; } 
         else if (keyMap === 'MUSIC') { MusicManager.playRandomGameTrack(); } 
         else { keys[keyMap] = true; } 
     };
-
     const release = (e) => {
-        if(isEditMode) return;
-        e.preventDefault();
-        el.classList.remove('pressed');
-        if(['SHOOT','HYPERSPACE','PAUSE','MUSIC'].indexOf(keyMap) === -1) {
-            keys[keyMap] = false;
-        }
+        if(isEditMode) return; e.preventDefault(); el.classList.remove('pressed');
+        if(['SHOOT','HYPERSPACE','PAUSE','MUSIC'].indexOf(keyMap) === -1) keys[keyMap] = false;
     };
-
     el.addEventListener('pointerdown', press);
-    el.addEventListener('pointerup', release);
-    el.addEventListener('pointerleave', release);
-    el.addEventListener('pointercancel', release);
+    el.addEventListener('pointerup', release); el.addEventListener('pointerleave', release); el.addEventListener('pointercancel', release);
 }
 
-// Initialize Buttons
 dragButtons.forEach(btn => setupDrag(btn));
 setupGameAction('btn-left', 'Control');
 setupGameAction('btn-right', 'Alt');
@@ -562,85 +610,45 @@ setupGameAction('btn-hyperspace', 'HYPERSPACE');
 setupGameAction('btn-pause', 'PAUSE');
 setupGameAction('btn-music', 'MUSIC');
 
+touchToggle.addEventListener('change', (e) => { if(e.target.checked) touchInterface.classList.remove('hidden'); else touchInterface.classList.add('hidden'); });
+editToggle.addEventListener('change', (e) => { isEditMode = e.target.checked; if(isEditMode) touchInterface.classList.add('edit-mode'); else touchInterface.classList.remove('edit-mode'); });
 
-// --- UI HANDLERS ---
-touchToggle.addEventListener('change', (e) => {
-    if(e.target.checked) touchInterface.classList.remove('hidden');
-    else touchInterface.classList.add('hidden');
-});
-
-editToggle.addEventListener('change', (e) => {
-    isEditMode = e.target.checked;
-    if(isEditMode) touchInterface.classList.add('edit-mode');
-    else touchInterface.classList.remove('edit-mode');
-});
-
+// --- MAIN LOOP ---
 document.getElementById('init-audio-btn').addEventListener('click', () => {
-    AudioEngine.init();
-    MusicManager.init();
-    MusicManager.playMenu();
+    AudioEngine.init(); MusicManager.init(); MusicManager.playMenu();
     document.getElementById('audio-wall').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
-    
-    // Auto-detect mobile
-    if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 1024) {
-        touchToggle.checked = true;
-        touchInterface.classList.remove('hidden');
-    }
-    
-    resize();
-    initStars('warp');
-    loop();
+    document.getElementById('crt-layer').classList.add('crt-active');
+    if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 1024) { touchToggle.checked = true; touchInterface.classList.remove('hidden'); }
+    resize(); initStars('warp'); loop();
 });
 
 document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('restart-btn').addEventListener('click', startGame);
 document.getElementById('return-menu-btn').addEventListener('click', () => {
-    gameState = 'MENU';
-    MusicManager.playMenu();
+    gameState = 'MENU'; MusicManager.playMenu();
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
     initStars('warp');
 });
 
-// --- CORE GAME LOOP ---
-function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 window.addEventListener('resize', resize);
 
-function initStars(mode) {
-    stars = [];
-    for(let i=0; i<100; i++) stars.push(new Star(mode));
-}
+function initStars(mode) { stars = []; for(let i=0; i<150; i++) stars.push(new Star(mode)); }
 
 function startGame() {
-    gameState = 'PLAYING';
-    isPaused = false;
-    score = 0;
-    lives = 3;
-    level = 1;
-    saucer = null;
-    saucerTimer = 0;
+    gameState = 'PLAYING'; isPaused = false;
+    // LOCK CONTROLS
+    isEditMode = false; editToggle.checked = false; touchInterface.classList.remove('edit-mode');
     
-    // FORCE EDIT MODE OFF WHEN STARTING GAME
-    isEditMode = false;
-    editToggle.checked = false;
-    touchInterface.classList.remove('edit-mode');
-
+    score = 0; lives = 3; level = 1; saucer = null; saucerTimer = 0;
+    player = new Player(); projectiles = []; enemyProjectiles = []; asteroids = []; particles = [];
+    
     MusicManager.playRandomGameTrack();
     
-    player = new Player();
-    projectiles = [];
-    enemyProjectiles = [];
-    asteroids = [];
-    particles = [];
-    
-    // Create initial asteroids
     for(let i=0; i<4; i++) {
-        let x = Math.random()*canvas.width;
-        let y = Math.random()*canvas.height;
+        let x = Math.random()*canvas.width; let y = Math.random()*canvas.height;
         if(Math.hypot(x-player.x, y-player.y) > 200) asteroids.push(new Asteroid(x,y,3));
     }
     
@@ -649,144 +657,107 @@ function startGame() {
     document.getElementById('score-hud').classList.remove('hidden');
     document.getElementById('lives-hud').classList.remove('hidden');
     document.getElementById('level-hud').classList.remove('hidden');
-    
     initStars('static');
 }
 
 function loop() {
     requestAnimationFrame(loop);
-    
-    // Clear
     ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width, canvas.height);
-    
-    // Background Stars
     stars.forEach(s => { s.update(); s.draw(); });
+    
+    if (shakeDuration > 0) {
+        ctx.save(); ctx.translate((Math.random()-0.5)*shakeMagnitude, (Math.random()-0.5)*shakeMagnitude); shakeDuration--;
+    }
 
     if(gameState === 'PLAYING' && !isPaused) {
         if(player) { player.update(); player.draw(); }
         
-        // Saucer Logic
+        // SAUCER
         if(!saucer) {
             saucerTimer++;
-            if(saucerTimer > 500 - (level*10)) {
-                saucer = new Saucer();
-                saucerTimer = 0;
-            }
+            if(saucerTimer > (1000 - level*50)) { saucer = new Saucer(Math.random()<0.2?'small':'large'); saucerTimer=0; }
         } else {
             saucer.update(); saucer.draw();
             if(saucer.markedForDeletion) saucer = null;
-            // Player hit Saucer
-            if(saucer && player.visible && Math.hypot(player.x-saucer.x, player.y-saucer.y) < 30) {
-                player.visible = false; lives--; AudioEngine.explode();
-                saucer = null;
-                checkGameOver();
+            if(saucer && player.visible && Math.hypot(player.x-saucer.x, player.y-saucer.y) < 40) {
+                player.die(); saucer.markedForDeletion = true; AudioEngine.stopSaucerSound();
             }
         }
 
-        // Projectiles
         projectiles.forEach((p,i) => {
-            p.update(); p.draw();
-            if(p.life<=0) projectiles.splice(i,1);
+            p.update(); p.draw(); if(p.life<=0) projectiles.splice(i,1);
         });
 
         enemyProjectiles.forEach((p,i) => {
-            p.update(); p.draw();
-            if(p.life<=0) enemyProjectiles.splice(i,1);
+            p.update(); p.draw(); if(p.life<=0) enemyProjectiles.splice(i,1);
             if(player.visible && Math.hypot(p.x-player.x, p.y-player.y) < 15) {
-                player.visible = false; lives--; AudioEngine.explode();
-                enemyProjectiles.splice(i,1);
-                checkGameOver();
+                player.die(); enemyProjectiles.splice(i,1);
             }
         });
 
         asteroids.forEach((a,ai) => {
             a.update(); a.draw();
             
-            // Hit by Bullet
+            // PROJECTILE vs ASTEROID
             projectiles.forEach((p,pi) => {
                 if(Math.hypot(p.x-a.x, p.y-a.y) < a.radius) {
-                    AudioEngine.explode();
-                    score += 100;
-                    projectiles.splice(pi,1);
-                    asteroids.splice(ai,1);
-                    // Debris
-                    for(let k=0; k<5; k++) particles.push(new Particle(a.x, a.y, '#fff'));
-                    // Split
-                    if(a.size > 1) {
-                        asteroids.push(new Asteroid(a.x, a.y, a.size-1));
-                        asteroids.push(new Asteroid(a.x, a.y, a.size-1));
+                    AudioEngine.explode(); score += (4-a.sizeClass)*100;
+                    projectiles.splice(pi,1); asteroids.splice(ai,1);
+                    for(let k=0; k<5; k++) particles.push(new Particle(a.x, a.y, '#fff', 4));
+                    if(a.sizeClass > 1) {
+                        asteroids.push(new Asteroid(a.x, a.y, a.sizeClass-1));
+                        asteroids.push(new Asteroid(a.x, a.y, a.sizeClass-1));
                     }
                 }
             });
             
-            // Saucer hit Asteroid
-            if(saucer && Math.hypot(saucer.x-a.x, saucer.y-a.y) < a.radius + 15) {
-                 saucer = null; AudioEngine.explode();
-                 asteroids.splice(ai,1);
+            // PROJECTILE vs SAUCER
+            if(saucer) {
+                 projectiles.forEach((p,pi) => {
+                    if(Math.hypot(p.x-saucer.x, p.y-saucer.y) < saucer.radius) {
+                        AudioEngine.explode(); AudioEngine.stopSaucerSound();
+                        score += saucer.points;
+                        floatingTexts.push(new FloatingText(saucer.x, saucer.y, saucer.points, '#ff4444'));
+                        saucer.markedForDeletion = true; projectiles.splice(pi,1);
+                        for(let k=0; k<20; k++) particles.push(new Particle(saucer.x, saucer.y, '#ff4444', 6));
+                    }
+                 });
             }
 
-            // Hit Player
             if(player.visible && Math.hypot(player.x-a.x, player.y-a.y) < player.radius + a.radius) {
-                AudioEngine.explode();
-                player.visible = false;
-                lives--;
-                // Sparks on death
-                for(let k=0; k<20; k++) particles.push(new Particle(player.x, player.y, '#ff4444'));
-                checkGameOver();
+                player.die();
             }
         });
         
-        particles.forEach((p,i) => {
-            p.update(); p.draw();
-            if(p.life<=0) particles.splice(i,1);
-        });
-        
-        floatingTexts.forEach((f,i) => {
-            f.update(); f.draw();
-            if(f.life<=0) floatingTexts.splice(i,1);
-        });
+        particles.forEach((p,i) => { p.update(); p.draw(); if(p.life<=0) particles.splice(i,1); });
+        floatingTexts.forEach((f,i) => { f.update(); f.draw(); if(f.life<=0) floatingTexts.splice(i,1); });
 
-        // Level clear check
-        if(asteroids.length === 0 && !saucer && gameState === 'PLAYING') {
-            level++;
-            score += 1000;
-            // Add more asteroids
+        if(asteroids.length === 0 && !saucer) {
+            level++; score += 1000;
+            floatingTexts.push(new FloatingText(canvas.width/2, canvas.height/2 - 50, "SECTOR CLEARED", "#00ff00"));
             for(let i=0; i<3+level; i++) asteroids.push(new Asteroid(Math.random()*canvas.width, Math.random()*canvas.height, 3));
         }
 
-        // HUD Update
         document.getElementById('score-val').innerText = score;
         document.getElementById('lives-val').innerText = lives;
         document.getElementById('level-val').innerText = level;
     }
+    if (shakeDuration > 0) ctx.restore();
 }
 
-function checkGameOver() {
-    if(lives < 0) {
-        gameState = 'GAMEOVER';
-        MusicManager.playOutro();
-        document.getElementById('final-score').innerText = score;
-        document.getElementById('game-over-screen').classList.remove('hidden');
-    } else {
-        setTimeout(() => { 
-            if(gameState === 'PLAYING') {
-                player.visible = true; player.x = canvas.width/2; player.y = canvas.height/2; player.vx=0; player.vy=0; 
-            }
-        }, 2000);
-    }
+function gameOver() {
+    gameState = 'GAMEOVER'; MusicManager.playOutro();
+    document.getElementById('final-score').innerText = score;
+    document.getElementById('game-over-screen').classList.remove('hidden');
 }
 
-// Keyboard Listeners
 window.addEventListener('keydown', e => {
     if(e.key === 'ArrowRight' && gameState === 'PLAYING' && player) player.shoot();
     if(e.key === 'Shift' && player) player.hyperspace();
     if(e.key === ' ') isPaused = !isPaused;
     if(keys.hasOwnProperty(e.key)) keys[e.key] = true;
 });
-window.addEventListener('keyup', e => {
-    if(keys.hasOwnProperty(e.key)) keys[e.key] = false;
-});
-
+window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 </script>
 </body>
 </html>
