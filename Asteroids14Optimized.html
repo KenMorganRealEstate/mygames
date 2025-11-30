@@ -13,8 +13,7 @@
         body {
             margin: 0; overflow: hidden; background-color: #000;
             font-family: 'Orbitron', sans-serif;
-            touch-action: none; /* CRITICAL: Disables browser zooming/panning */
-            user-select: none; -webkit-user-select: none;
+            touch-action: none; user-select: none; -webkit-user-select: none;
             overscroll-behavior: none;
         }
         canvas { display: block; }
@@ -182,7 +181,7 @@
 
 <script>
 /**
- * MORGAN'S FURY 2112 - FINAL FIX
+ * MORGAN'S FURY 2112 - FINAL ADJUSTED PHYSICS
  */
 
 // --- VARIABLES ---
@@ -283,8 +282,8 @@ class Projectile {
         this.isEnemy = isEnemy;
         this.markedForDeletion = false;
         
-        // REDUCED LIFESPAN FOR PLAYER (40), LONGER FOR ENEMY (100)
-        this.lifespan = isEnemy ? 100 : 40; 
+        // FIXED LIFESPAN: Player shots fade after 45 frames (short range), Enemies 100
+        this.lifespan = isEnemy ? 100 : 45; 
         
         if (isEnemy) { if (AudioEngine && typeof AudioEngine.saucerFire === 'function') AudioEngine.saucerFire(); } 
         else { if (AudioEngine && typeof AudioEngine.shoot === 'function') AudioEngine.shoot(); }
@@ -293,10 +292,14 @@ class Projectile {
         this.x += this.vx; this.y += this.vy; this.lifespan--;
         if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
         if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
+        
+        // Kill bullet if lifespan ends
         if (this.lifespan <= 0) this.markedForDeletion = true;
     }
     draw() {
         ctx.save(); ctx.shadowBlur = 5; ctx.shadowColor = this.color;
+        // Fade out as they die
+        ctx.globalAlpha = Math.min(1, this.lifespan / 10);
         ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
 }
@@ -336,7 +339,6 @@ class Saucer {
         enemyProjectiles.push(new Projectile(this.x, this.y + 5, angle, true));
     }
     draw() {
-        // ORIGINAL SAUCER DRAWING CODE
         ctx.save(); ctx.translate(this.x, this.y);
         ctx.shadowBlur = 10; ctx.shadowColor = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 2;
         ctx.beginPath();
@@ -469,16 +471,18 @@ class Particle {
         this.x = x; this.y = y; this.color = color;
         const angle = Math.random() * Math.PI * 2; const velocity = Math.random() * speed;
         this.vx = Math.cos(angle) * velocity; this.vy = Math.sin(angle) * velocity;
-        this.alpha = 1; this.decay = 0.015 + Math.random() * 0.02;
+        this.alpha = 1;
+        // FIXED EXHAUST: Fade faster (0.04) so they don't linger forever
+        this.decay = 0.04 + Math.random() * 0.03;
     }
     update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
     draw() {
-        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+        ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color;
         ctx.beginPath(); ctx.arc(this.x, this.y, Math.random()*2+1, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
 }
 
-// --- AUDIO (RESTORED ORIGINAL) ---
+// --- AUDIO ---
 const MusicManager = {
     menuTrack: new Audio('https://kenmorganrealestate.github.io/mygames/overture.mp3'),
     playlistUrls: [
@@ -688,11 +692,11 @@ function loop() {
         }
 
         projectiles.forEach((p,i) => {
-            p.update(); p.draw(); if(p.life<=0) projectiles.splice(i,1);
+            p.update(); p.draw(); if(p.markedForDeletion) projectiles.splice(i,1);
         });
 
         enemyProjectiles.forEach((p,i) => {
-            p.update(); p.draw(); if(p.life<=0) enemyProjectiles.splice(i,1);
+            p.update(); p.draw(); if(p.markedForDeletion) enemyProjectiles.splice(i,1);
             if(player.visible && Math.hypot(p.x-player.x, p.y-player.y) < 15) {
                 player.die(); enemyProjectiles.splice(i,1);
             }
@@ -705,7 +709,8 @@ function loop() {
             projectiles.forEach((p,pi) => {
                 if(Math.hypot(p.x-a.x, p.y-a.y) < a.radius) {
                     AudioEngine.explode(); score += (4-a.sizeClass)*100;
-                    projectiles.splice(pi,1); asteroids.splice(ai,1);
+                    p.markedForDeletion = true; 
+                    asteroids.splice(ai,1);
                     for(let k=0; k<5; k++) particles.push(new Particle(a.x, a.y, '#fff', 4));
                     if(a.sizeClass > 1) {
                         asteroids.push(new Asteroid(a.x, a.y, a.sizeClass-1));
@@ -721,7 +726,7 @@ function loop() {
                         AudioEngine.explode(); AudioEngine.stopSaucerSound();
                         score += saucer.points;
                         floatingTexts.push(new FloatingText(saucer.x, saucer.y, saucer.points, '#ff4444'));
-                        saucer.markedForDeletion = true; projectiles.splice(pi,1);
+                        saucer.markedForDeletion = true; p.markedForDeletion = true;
                         for(let k=0; k<20; k++) particles.push(new Particle(saucer.x, saucer.y, '#ff4444', 6));
                     }
                  });
@@ -732,7 +737,7 @@ function loop() {
             }
         });
         
-        particles.forEach((p,i) => { p.update(); p.draw(); if(p.life<=0) particles.splice(i,1); });
+        particles.forEach((p,i) => { p.update(); p.draw(); if(p.alpha<=0) particles.splice(i,1); });
         floatingTexts.forEach((f,i) => { f.update(); f.draw(); if(f.life<=0) floatingTexts.splice(i,1); });
 
         if(asteroids.length === 0 && !saucer) {
