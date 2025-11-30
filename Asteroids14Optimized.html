@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MORGAN'S FURY 2112</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0; overflow: hidden; background-color: #000;
+            font-family: 'Orbitron', sans-serif;
+            touch-action: none; user-select: none;
+            -webkit-user-select: none; overscroll-behavior: none;
+        }
+        canvas { display: block; }
+
+        /* BACKGROUNDS */
+        .bg-cover-art {
+            background-image: url('https://kenmorganrealestate.github.io/mygames/2112.jpg?v=999');
+            background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #000;
+        }
+        .bg-game-over {
+            background-image: url('https://kenmorganrealestate.github.io/mygames/chromey.jpg?v=999');
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+        }
+        .bg-deep-space { background-color: #000000; }
+
+        /* FX */
+        @keyframes scanline-fade { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; z-index: 90; pointer-events: none; opacity: 0;
+        }
+        .crt-active { animation: scanline-fade 4s ease-out forwards; }
+        
+        /* UI */
+        .title-font { font-family: 'Cinzel Decorative', cursive; font-weight: 900; color: #bf0000; text-shadow: 0 0 5px #fff, 0 0 10px #bf0000; }
+        .ui-font { font-family: 'Orbitron', sans-serif; }
+        
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+        }
+        .interactive { pointer-events: auto; }
+        .hidden { display: none !important; }
+
+        .rush-box {
+            background: rgba(0, 0, 0, 0.8); border: 2px solid #bf0000; box-shadow: 0 0 20px rgba(191, 0, 0, 0.4);
+            padding: 25px; border-radius: 4px; text-align: center; max-width: 90%; position: relative; z-index: 20;
+        }
+        .rush-button {
+            background: transparent; color: #bf0000; border: 2px solid #bf0000; padding: 15px 30px;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 0 10px #bf0000; transition: all 0.3s; font-family: 'Orbitron', sans-serif; margin-top: 10px;
+        }
+        .rush-button:hover { background: #bf0000; color: #000; box-shadow: 0 0 30px #bf0000; }
+        .rush-input { background: rgba(0,0,0,0.7); border: 1px solid #fff; color: #fff; padding: 10px; text-align: center; font-size: 1.2rem; outline: none; }
+
+        /* DRAGGABLE BUTTONS STYLE */
+        .drag-btn {
+            position: absolute;
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #555;
+            color: #fff;
+            font-size: 1.5rem;
+            display: flex; justify-content: center; align-items: center;
+            user-select: none;
+            touch-action: none;
+            backdrop-filter: blur(2px);
+            transition: transform 0.1s, background 0.1s;
+            z-index: 100;
+        }
+        .drag-btn:active { transform: scale(0.95); background: rgba(191, 0, 0, 0.3); }
+        
+        /* Edit Mode Styles */
+        .edit-mode .drag-btn {
+            border-color: #00ff00;
+            border-style: dashed;
+            background: rgba(0, 255, 0, 0.1);
+            animation: pulse-border 1s infinite;
+        }
+        @keyframes pulse-border {
+            0% { border-color: #00ff00; }
+            50% { border-color: #fff; }
+            100% { border-color: #00ff00; }
+        }
+
+        /* TOGGLE SWITCHES */
+        .toggle-row { display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; align-items: center; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; transform: skew(-10deg); border: 1px solid #555; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #888; transition: .4s; }
+        input:checked + .slider { background-color: #000; border-color: #bf0000; }
+        input:checked + .slider:before { transform: translateX(26px); background-color: #bf0000; }
+
+        /* HUD */
+        #score-hud, #lives-hud, #level-hud { position: absolute; top: 20px; color: #bf0000; font-size: 20px; font-weight: bold; text-shadow: 0 0 5px #bf0000; pointer-events: none; }
+        #score-hud { left: 20px; }
+        #lives-hud { right: 20px; }
+        #level-hud { left: 50%; transform: translateX(-50%); }
+
+    </style>
+</head>
+<body class="bg-cover-art" id="main-body"> 
+
+    <div id="crt-layer" class="crt-overlay"></div>
+
+    <div id="audio-wall" class="ui-layer interactive">
+        <h1 class="title-font text-4xl mb-4 text-center">MORGAN'S FURY 2112</h1>
+        <button id="init-audio-btn" class="rush-button">CLICK TO ENGAGE SYSTEMS</button>
+    </div>
+
+    <div id="score-hud" class="ui-font hidden">SCORE: <span id="score-val">0</span></div>
+    <div id="level-hud" class="ui-font hidden">LEVEL: <span id="level-val">1</span></div>
+    <div id="lives-hud" class="ui-font hidden">LIVES: <span id="lives-val">3</span></div>
+
+    <div id="touch-interface" class="hidden" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none;">
+        <div id="btn-left" class="drag-btn interactive" style="bottom: 120px; left: 20px;">↺</div>
+        <div id="btn-right" class="drag-btn interactive" style="bottom: 120px; left: 100px;">↻</div>
+        <div id="btn-thrust" class="drag-btn interactive" style="bottom: 30px; left: 60px; font-size: 2rem;">🚀</div>
+        
+        <div id="btn-fire" class="drag-btn interactive" style="bottom: 40px; right: 30px; border-color: #ff4444; color: #ff4444; width: 80px; height: 80px; font-size: 2rem;">🔥</div>
+        <div id="btn-hyperspace" class="drag-btn interactive" style="bottom: 140px; right: 40px; border-color: #a0a0ff; color: #a0a0ff;">⚡</div>
+        
+        <div id="btn-pause" class="drag-btn interactive" style="top: 80px; left: 20px; width: 50px; height: 50px; font-size: 1rem;">⏸</div>
+        <div id="btn-music" class="drag-btn interactive" style="top: 80px; right: 20px; width: 50px; height: 50px; font-size: 1rem;">♫</div>
+    </div>
+
+    <div id="start-screen" class="ui-layer interactive hidden">
+        <div class="rush-box w-96">
+            <h1 class="title-font text-4xl mb-2">MORGAN'S FURY 2112</h1>
+            <p class="text-gray-400 ui-font text-xs mb-6">DEV: KEN MORGAN</p>
+            
+            <div class="bg-black/80 p-4 rounded border border-gray-700 mb-6 w-full">
+                <h3 class="text-red-500 font-bold mb-3 border-b border-gray-700 pb-1 text-sm">SYSTEM CONFIG</h3>
+                
+                <div class="toggle-row">
+                    <span class="text-xs text-gray-300">TOUCH BUTTONS</span>
+                    <label class="switch">
+                        <input type="checkbox" id="touch-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="text-xs text-yellow-500 font-bold">CUSTOMIZE HUD (DRAG)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="edit-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="start-btn" class="rush-button w-full">INITIALIZE</button>
+
+            <div class="mt-4 border-t border-red-900 pt-2">
+                <h3 class="text-red-500 font-bold text-xs">HALL OF FAME</h3>
+                <table id="highscore-list" class="w-full text-xs text-gray-400"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="ui-layer interactive hidden">
+        <div class="electric-box">
+            <h1 class="title-font text-5xl mb-4 text-white">MISSION FAILED</h1>
+            <p class="text-red-500 text-2xl mb-6 ui-font">SCORE: <span id="final-score">0</span></p>
+            <input type="text" id="player-name" class="rush-input" placeholder="PILOT NAME" maxlength="10">
+            <br>
+            <button id="save-score-btn" class="rush-button text-sm mt-4">SAVE RECORD</button>
+            <div class="mt-4">
+                <button id="restart-btn" class="rush-button text-sm">RETRY</button>
+                <button id="return-menu-btn" class="rush-button text-sm">MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+/**
+ * GAME ENGINE & LOGIC
+ */
+
+// --- CONFIG ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const STORAGE_KEY = 'morgans_fury_scores';
+
+// State
+let gameState = 'INIT_WAIT';
+let isPaused = false;
+let isEditMode = false; // For dragging buttons
+let score = 0;
+let lives = 3;
+let level = 1;
+let animationId;
+
+// Inputs
+const keys = { 
+    ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, 
+    Control: false, Alt: false, Shift: false, ' ': false 
+};
+
+// Game Objects
+let player;
+let projectiles = [];
+let asteroids = [];
+let particles = [];
+let stars = [];
+
+// --- CLASS DEFINITIONS ---
+
+class Star {
+    constructor(mode = 'static') {
+        this.init(mode);
+    }
+    init(mode) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2;
+        this.alpha = Math.random();
+        this.speed = (mode === 'warp') ? 15 : 0;
+    }
+    update() {
+        if(this.speed > 0) {
+            this.x -= this.speed;
+            if(this.x < 0) this.x = canvas.width;
+        }
+    }
+    draw() {
+        ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+    }
+}
+
+class Player {
+    constructor() {
+        this.x = canvas.width/2; this.y = canvas.height/2;
+        this.vx = 0; this.vy = 0;
+        this.angle = -Math.PI/2;
+        this.radius = 15;
+        this.visible = true;
+        this.thrusting = false;
+    }
+    update() {
+        if(!this.visible) return;
+        
+        // Rotation
+        if(keys.Control) this.angle -= 0.08;
+        if(keys.Alt) this.angle += 0.08;
+
+        // Thrust
+        this.thrusting = keys.ArrowDown;
+        if(this.thrusting) {
+            this.vx += Math.cos(this.angle) * 0.15;
+            this.vy += Math.sin(this.angle) * 0.15;
+            // Particles
+            if(Math.random()>0.5) particles.push(new Particle(this.x - Math.cos(this.angle)*15, this.y - Math.sin(this.angle)*15, '#ffaa00'));
+        }
+
+        // Physics
+        this.vx *= 0.99; this.vy *= 0.99;
+        this.x += this.vx; this.y += this.vy;
+
+        // Screen Wrap
+        if(this.x < 0) this.x = canvas.width; if(this.x > canvas.width) this.x = 0;
+        if(this.y < 0) this.y = canvas.height; if(this.y > canvas.height) this.y = 0;
+    }
+    draw() {
+        if(!this.visible) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-15, 12); ctx.lineTo(-10,0); ctx.lineTo(-15,-12); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        if(this.thrusting) {
+            ctx.fillStyle = '#ffaa00';
+            ctx.beginPath(); ctx.moveTo(-12,6); ctx.lineTo(-25,0); ctx.lineTo(-12,-6); ctx.fill();
+        }
+        ctx.restore();
+    }
+    shoot() {
+        if(!this.visible) return;
+        projectiles.push(new Projectile(this.x + Math.cos(this.angle)*20, this.y + Math.sin(this.angle)*20, this.angle));
+        AudioEngine.shoot();
+    }
+    hyperspace() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = 0; this.vy = 0;
+    }
+}
+
+class Projectile {
+    constructor(x, y, angle) {
+        this.x = x; this.y = y;
+        this.vx = Math.cos(angle) * 14;
+        this.vy = Math.sin(angle) * 14;
+        this.life = 60;
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy; this.life--;
+        if(this.x < 0) this.x = canvas.width; if(this.x > canvas.width) this.x = 0;
+        if(this.y < 0) this.y = canvas.height; if(this.y > canvas.height) this.y = 0;
+    }
+    draw() {
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+    }
+}
+
+class Asteroid {
+    constructor(x, y, size) {
+        this.x = x; this.y = y; this.size = size; // 3, 2, 1
+        this.radius = size * 15;
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * (1 + Math.random());
+        this.vy = Math.sin(angle) * (1 + Math.random());
+        this.points = [];
+        const v = 8;
+        for(let i=0; i<v; i++) {
+            this.points.push((this.radius * 0.7) + Math.random() * (this.radius * 0.3));
+        }
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if(this.x < -50) this.x = canvas.width+50; if(this.x > canvas.width+50) this.x = -50;
+        if(this.y < -50) this.y = canvas.height+50; if(this.y > canvas.height+50) this.y = -50;
+    }
+    draw() {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath();
+        for(let i=0; i<this.points.length; i++) {
+            const a = (Math.PI*2 / this.points.length) * i;
+            const r = this.points[i];
+            const px = Math.cos(a)*r; const py = Math.sin(a)*r;
+            if(i===0) ctx.moveTo(this.x+px, this.y+py); else ctx.lineTo(this.x+px, this.y+py);
+        }
+        ctx.closePath(); ctx.stroke();
+    }
+}
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.vx = (Math.random()-0.5)*4; this.vy = (Math.random()-0.5)*4;
+        this.life = 1.0;
+    }
+    update() { this.x+=this.vx; this.y+=this.vy; this.life-=0.05; }
+    draw() { ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
+}
+
+// --- AUDIO SYSTEM ---
+const AudioEngine = {
+    ctx: null,
+    init() { 
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+    },
+    tone(freq, type, dur) {
+        if(!this.ctx) return;
+        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        o.type = type; o.frequency.value = freq;
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + dur); o.stop(this.ctx.currentTime + dur);
+    },
+    shoot() { this.tone(880, 'sawtooth', 0.1); },
+    explode() { this.tone(100, 'square', 0.3); },
+    music: null,
+    playMusic() {
+        // Simple playlist simulation using generic urls or tone generation
+        // For this code, we just log music. Real implementation needs hosted mp3s.
+        console.log("Next Track Playing...");
+    }
+};
+
+// --- DRAGGABLE BUTTON LOGIC (NEW) ---
+const touchInterface = document.getElementById('touch-interface');
+const btns = document.querySelectorAll('.drag-btn');
+const touchToggle = document.getElementById('touch-toggle');
+const editToggle = document.getElementById('edit-toggle');
+
+// Helper to move buttons
+function makeDraggable(el) {
+    let offsetX, offsetY;
+    
+    el.addEventListener('touchstart', (e) => {
+        if(!isEditMode) return; // Only drag in edit mode
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = el.getBoundingClientRect();
+        offsetX = touch.clientX - rect.left;
+        offsetY = touch.clientY - rect.top;
+    });
+
+    el.addEventListener('touchmove', (e) => {
+        if(!isEditMode) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        el.style.left = (touch.clientX - offsetX) + 'px';
+        el.style.top = (touch.clientY - offsetY) + 'px';
+        el.style.bottom = 'auto'; // Clear bottom/right constraints
+        el.style.right = 'auto';
+    });
+}
+
+// Attach Drag Logic
+btns.forEach(btn => makeDraggable(btn));
+
+// Attach Game Logic to Buttons
+function attachGameAction(id, key) {
+    const el = document.getElementById(id);
+    
+    const startAction = (e) => {
+        if(isEditMode) return; // Don't fire game action if editing layout
+        e.preventDefault();
+        if(key === 'ActionShoot' && player) player.shoot();
+        else if(key === 'ActionHyperspace' && player) player.hyperspace();
+        else if(key === 'ActionPause') { isPaused = !isPaused; }
+        else if(key === 'ActionMusic') { AudioEngine.playMusic(); }
+        else keys[key] = true;
+        
+        el.style.backgroundColor = "rgba(191,0,0,0.8)";
+    };
+
+    const endAction = (e) => {
+        if(isEditMode) return;
+        e.preventDefault();
+        if(key !== 'ActionShoot' && key !== 'ActionPause' && key !== 'ActionMusic') keys[key] = false;
+        el.style.backgroundColor = "rgba(0,0,0,0.5)";
+    };
+
+    el.addEventListener('touchstart', startAction);
+    el.addEventListener('touchend', endAction);
+    el.addEventListener('mousedown', startAction); // Mouse fallback
+    el.addEventListener('mouseup', endAction);
+}
+
+// Map Buttons
+attachGameAction('btn-left', 'Control'); // Rotate Left
+attachGameAction('btn-right', 'Alt');    // Rotate Right
+attachGameAction('btn-thrust', 'ArrowDown');
+attachGameAction('btn-fire', 'ActionShoot');
+attachGameAction('btn-hyperspace', 'ActionHyperspace');
+attachGameAction('btn-pause', 'ActionPause');
+attachGameAction('btn-music', 'ActionMusic');
+
+
+// --- UI LOGIC ---
+touchToggle.addEventListener('change', (e) => {
+    if(e.target.checked) touchInterface.classList.remove('hidden');
+    else touchInterface.classList.add('hidden');
+});
+
+editToggle.addEventListener('change', (e) => {
+    isEditMode = e.target.checked;
+    if(isEditMode) {
+        touchInterface.classList.add('edit-mode');
+    } else {
+        touchInterface.classList.remove('edit-mode');
+    }
+});
+
+// Init Audio Button
+document.getElementById('init-audio-btn').addEventListener('click', () => {
+    AudioEngine.init();
+    document.getElementById('audio-wall').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+    
+    // Auto-detect mobile
+    if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 1024) {
+        touchToggle.checked = true;
+        touchInterface.classList.remove('hidden');
+    }
+    
+    resize();
+    initStars();
+    loop();
+});
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('restart-btn').addEventListener('click', startGame);
+document.getElementById('return-menu-btn').addEventListener('click', () => {
+    gameState = 'MENU';
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+    initStars();
+});
+
+// --- CORE FUNCTIONS ---
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+
+function initStars() {
+    stars = [];
+    for(let i=0; i<100; i++) stars.push(new Star(gameState === 'PLAYING' ? 'static' : 'warp'));
+}
+
+function startGame() {
+    gameState = 'PLAYING';
+    isPaused = false;
+    score = 0;
+    lives = 3;
+    player = new Player();
+    projectiles = [];
+    asteroids = [];
+    particles = [];
+    
+    // Create initial asteroids
+    for(let i=0; i<4; i++) {
+        let x = Math.random()*canvas.width;
+        let y = Math.random()*canvas.height;
+        if(Math.hypot(x-player.x, y-player.y) > 200) asteroids.push(new Asteroid(x,y,3));
+    }
+    
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('score-hud').classList.remove('hidden');
+    document.getElementById('lives-hud').classList.remove('hidden');
+    document.getElementById('level-hud').classList.remove('hidden');
+    
+    initStars();
+}
+
+function loop() {
+    requestAnimationFrame(loop);
+    
+    // Clear
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width, canvas.height);
+    
+    // Background Stars
+    stars.forEach(s => { s.update(); s.draw(); });
+
+    if(gameState === 'PLAYING' && !isPaused) {
+        player.update(); player.draw();
+        
+        projectiles.forEach((p,i) => {
+            p.update(); p.draw();
+            if(p.life<=0) projectiles.splice(i,1);
+        });
+
+        asteroids.forEach((a,ai) => {
+            a.update(); a.draw();
+            
+            // Hit by Bullet
+            projectiles.forEach((p,pi) => {
+                if(Math.hypot(p.x-a.x, p.y-a.y) < a.radius) {
+                    AudioEngine.explode();
+                    score += 100;
+                    projectiles.splice(pi,1);
+                    asteroids.splice(ai,1);
+                    // Split
+                    if(a.size > 1) {
+                        asteroids.push(new Asteroid(a.x, a.y, a.size-1));
+                        asteroids.push(new Asteroid(a.x, a.y, a.size-1));
+                    }
+                }
+            });
+
+            // Hit Player
+            if(player.visible && Math.hypot(player.x-a.x, player.y-a.y) < player.radius + a.radius) {
+                AudioEngine.explode();
+                player.visible = false;
+                lives--;
+                if(lives <= 0) {
+                    gameState = 'GAMEOVER';
+                    document.getElementById('final-score').innerText = score;
+                    document.getElementById('game-over-screen').classList.remove('hidden');
+                } else {
+                    setTimeout(() => { player.visible = true; player.x = canvas.width/2; player.y = canvas.height/2; }, 2000);
+                }
+            }
+        });
+        
+        particles.forEach((p,i) => {
+            p.update(); p.draw();
+            if(p.life<=0) particles.splice(i,1);
+        });
+
+        // Level clear check
+        if(asteroids.length === 0) {
+            level++;
+            for(let i=0; i<4+level; i++) asteroids.push(new Asteroid(Math.random()*canvas.width, Math.random()*canvas.height, 3));
+        }
+
+        // HUD Update
+        document.getElementById('score-val').innerText = score;
+        document.getElementById('lives-val').innerText = lives;
+        document.getElementById('level-val').innerText = level;
+    }
+}
+
+// Keyboard Listeners
+window.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight' && gameState === 'PLAYING') player.shoot();
+    if(e.key === 'Shift') player.hyperspace();
+    if(e.key === ' ') isPaused = !isPaused;
+    if(keys.hasOwnProperty(e.key)) keys[e.key] = true;
+});
+window.addEventListener('keyup', e => {
+    if(keys.hasOwnProperty(e.key)) keys[e.key] = false;
+});
+
+</script>
+</body>
+</html>
