@@ -13,7 +13,8 @@
         body {
             margin: 0; overflow: hidden; background-color: #000;
             font-family: 'Orbitron', sans-serif;
-            touch-action: none; user-select: none; -webkit-user-select: none;
+            touch-action: none; /* CRITICAL: Disables browser zooming/panning */
+            user-select: none; -webkit-user-select: none;
             overscroll-behavior: none;
         }
         canvas { display: block; }
@@ -181,7 +182,7 @@
 
 <script>
 /**
- * MORGAN'S FURY 2112 - COMPLETE
+ * MORGAN'S FURY 2112 - FINAL FIX
  */
 
 // --- VARIABLES ---
@@ -281,7 +282,9 @@ class Projectile {
         this.color = isEnemy ? '#ff0000' : '#ffffff';
         this.isEnemy = isEnemy;
         this.markedForDeletion = false;
-        this.lifespan = 55;
+        
+        // REDUCED LIFESPAN FOR PLAYER (40), LONGER FOR ENEMY (100)
+        this.lifespan = isEnemy ? 100 : 40; 
         
         if (isEnemy) { if (AudioEngine && typeof AudioEngine.saucerFire === 'function') AudioEngine.saucerFire(); } 
         else { if (AudioEngine && typeof AudioEngine.shoot === 'function') AudioEngine.shoot(); }
@@ -559,7 +562,7 @@ const AudioEngine = {
     }
 };
 
-// --- TOUCH LOGIC (FIXED) ---
+// --- TOUCH LOGIC ---
 const touchInterface = document.getElementById('touch-interface');
 const touchToggle = document.getElementById('touch-toggle');
 const editToggle = document.getElementById('edit-toggle');
