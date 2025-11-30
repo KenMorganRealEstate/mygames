@@ -283,7 +283,7 @@ class Projectile {
         this.markedForDeletion = false;
         
         // FIXED LIFESPAN: Player shots fade after 45 frames (short range), Enemies 100
-        this.lifespan = isEnemy ? 100 : 45; 
+        this.lifespan = isEnemy ? 100 : 100; 
         
         if (isEnemy) { if (AudioEngine && typeof AudioEngine.saucerFire === 'function') AudioEngine.saucerFire(); } 
         else { if (AudioEngine && typeof AudioEngine.shoot === 'function') AudioEngine.shoot(); }
@@ -473,7 +473,7 @@ class Particle {
         this.vx = Math.cos(angle) * velocity; this.vy = Math.sin(angle) * velocity;
         this.alpha = 1;
         // FIXED EXHAUST: Fade faster (0.04) so they don't linger forever
-        this.decay = 0.04 + Math.random() * 0.03;
+        this.decay = 0.02 + Math.random() * 0.03;
     }
     update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
     draw() {
