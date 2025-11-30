@@ -85,6 +85,7 @@
             border-style: dashed;
             background: rgba(0, 255, 0, 0.2);
             animation: pulse-border 1s infinite;
+            cursor: grab;
         }
         @keyframes pulse-border {
             0% { border-color: #00ff00; } 50% { border-color: #fff; } 100% { border-color: #00ff00; }
@@ -162,6 +163,7 @@
                     <span class="text-xs text-yellow-500 font-bold">CUSTOMIZE LAYOUT (DRAG)</span>
                     <label class="switch"><input type="checkbox" id="edit-toggle"><span class="slider"></span></label>
                 </div>
+                <p class="text-xs text-gray-500 italic text-center mt-2">*Turn Customize OFF to Play</p>
             </div>
             
             <button id="start-btn" class="rush-button w-full">INITIALIZE MISSION</button>
@@ -191,7 +193,7 @@
 
 <script>
 /**
- * MORGAN'S FURY 2112 - COMPLETE ENGINE
+ * MORGAN'S FURY 2112 - FIXED CONTROLS
  */
 
 // --- GLOBAL VARIABLES ---
@@ -202,7 +204,7 @@ const STORAGE_KEY = 'morgans_fury_scores';
 // State Flags
 let gameState = 'INIT_WAIT';
 let isPaused = false;
-let isEditMode = false; 
+let isEditMode = false; // Controls Drag vs Click
 
 // Game Data
 let score = 0;
@@ -473,7 +475,6 @@ const AudioEngine = {
     },
     shoot() { this.tone(880, 'sawtooth', 0.15); },
     explode() { 
-        // Simple noise burst simulation
         this.tone(100, 'square', 0.4, 0.3);
         this.tone(50, 'sawtooth', 0.4, 0.3);
     },
@@ -488,14 +489,14 @@ const AudioEngine = {
     saucerFire() { this.tone(1200, 'sine', 0.1, 0.2); }
 };
 
-// --- TOUCH INTERFACE LOGIC (POINTER EVENTS) ---
+// --- TOUCH INTERFACE LOGIC ---
 
 const touchInterface = document.getElementById('touch-interface');
 const touchToggle = document.getElementById('touch-toggle');
 const editToggle = document.getElementById('edit-toggle');
 const dragButtons = document.querySelectorAll('.drag-btn');
 
-// 1. Dragging Logic (Edit Mode)
+// 1. Dragging Logic (Edit Mode Only)
 function setupDrag(el) {
     let offsetX, offsetY;
     el.addEventListener('pointerdown', (e) => {
@@ -520,12 +521,12 @@ function setupDrag(el) {
     });
 }
 
-// 2. Game Action Logic (Play Mode)
+// 2. Game Action Logic (Play Mode Only)
 function setupGameAction(id, keyMap) {
     const el = document.getElementById(id);
     
     const press = (e) => {
-        if(isEditMode) return; 
+        if(isEditMode) return; // Ignore clicks in edit mode
         e.preventDefault(); 
         el.classList.add('pressed'); 
         
@@ -533,7 +534,7 @@ function setupGameAction(id, keyMap) {
         else if (keyMap === 'HYPERSPACE') { if(player && !isPaused) player.hyperspace(); } 
         else if (keyMap === 'PAUSE') { isPaused = !isPaused; } 
         else if (keyMap === 'MUSIC') { MusicManager.playRandomGameTrack(); } 
-        else { keys[keyMap] = true; } // Continuous keys
+        else { keys[keyMap] = true; } 
     };
 
     const release = (e) => {
@@ -623,6 +624,11 @@ function startGame() {
     saucer = null;
     saucerTimer = 0;
     
+    // FORCE EDIT MODE OFF WHEN STARTING GAME
+    isEditMode = false;
+    editToggle.checked = false;
+    touchInterface.classList.remove('edit-mode');
+
     MusicManager.playRandomGameTrack();
     
     player = new Player();
