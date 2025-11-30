@@ -283,7 +283,7 @@ class Projectile {
         this.markedForDeletion = false;
         
         // FIXED LIFESPAN: Player shots fade after 45 frames (short range), Enemies 100
-        this.lifespan = isEnemy ? 100 : 100; 
+        this.lifespan = isEnemy ? 75 : 100; 
         
         if (isEnemy) { if (AudioEngine && typeof AudioEngine.saucerFire === 'function') AudioEngine.saucerFire(); } 
         else { if (AudioEngine && typeof AudioEngine.shoot === 'function') AudioEngine.shoot(); }
