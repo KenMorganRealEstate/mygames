@@ -14,8 +14,7 @@
             margin: 0; overflow: hidden; background-color: #000;
             font-family: 'Orbitron', sans-serif;
             touch-action: none; /* CRITICAL: Disables browser zooming/panning */
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
             overscroll-behavior: none;
         }
         canvas { display: block; }
@@ -59,27 +58,25 @@
             position: absolute;
             width: 75px; height: 75px;
             border-radius: 50%;
-            background: rgba(40, 40, 40, 0.6);
-            border: 2px solid #888;
+            background: rgba(60, 60, 60, 0.4);
+            border: 2px solid #fff;
             color: #fff;
             font-size: 1.8rem;
             display: flex; justify-content: center; align-items: center;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none; /* Stops browser handling touch */
-            backdrop-filter: blur(4px);
-            z-index: 9999; /* Always on top */
-            pointer-events: auto;
+            user-select: none; -webkit-user-select: none;
+            touch-action: none;
+            backdrop-filter: blur(2px);
+            z-index: 9999; /* TOP LAYER */
+            pointer-events: auto; /* MUST BE AUTO */
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            transition: transform 0.1s, background-color 0.1s;
         }
         
         /* Visual Feedback when Pressed */
         .drag-btn.pressed {
-            background-color: rgba(255, 0, 0, 0.6) !important;
-            border-color: #fff !important;
+            background-color: rgba(255, 0, 0, 0.8) !important;
+            border-color: #ff0000 !important;
             transform: scale(0.95);
-            box-shadow: 0 0 15px #bf0000;
+            box-shadow: 0 0 20px #ff0000;
         }
 
         /* Edit Mode Styles */
@@ -90,9 +87,7 @@
             animation: pulse-border 1s infinite;
         }
         @keyframes pulse-border {
-            0% { border-color: #00ff00; }
-            50% { border-color: #fff; }
-            100% { border-color: #00ff00; }
+            0% { border-color: #00ff00; } 50% { border-color: #fff; } 100% { border-color: #00ff00; }
         }
 
         /* --- SWITCHES --- */
@@ -110,10 +105,8 @@
         #lives-hud { right: 20px; }
         #level-hud { left: 50%; transform: translateX(-50%); }
 
-        /* FX: CRT */
+        /* FX */
         #crt-layer { pointer-events: none; }
-        
-        /* FX: Sparks */
         #sparks-container { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
         .spark { position: absolute; width: 5px; height: 5px; background: orange; border-radius: 50%; animation: floatUp 2s linear forwards; }
         @keyframes floatUp { to { transform: translateY(-100vh); opacity: 0; } }
@@ -135,33 +128,23 @@
 
     <div id="touch-interface" class="hidden" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 9000; pointer-events: none;">
         
-        <div id="btn-left" class="drag-btn interactive" style="bottom: 120px; left: 20px;">
+        <div id="btn-left" class="drag-btn" style="bottom: 120px; left: 20px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </div>
         
-        <div id="btn-right" class="drag-btn interactive" style="bottom: 120px; left: 110px;">
+        <div id="btn-right" class="drag-btn" style="bottom: 120px; left: 110px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
         </div>
         
-        <div id="btn-thrust" class="drag-btn interactive" style="bottom: 30px; left: 65px; width: 85px; height: 85px; border-color: #fff;">
-            🚀
-        </div>
+        <div id="btn-thrust" class="drag-btn" style="bottom: 30px; left: 65px; width: 85px; height: 85px; border-color: #fff;">🚀</div>
         
-        <div id="btn-fire" class="drag-btn interactive" style="bottom: 40px; right: 30px; width: 90px; height: 90px; border-color: #ff4444; color: #ff4444;">
-            🔥
-        </div>
+        <div id="btn-fire" class="drag-btn" style="bottom: 40px; right: 30px; width: 90px; height: 90px; border-color: #ff4444; color: #ff4444;">🔥</div>
         
-        <div id="btn-hyperspace" class="drag-btn interactive" style="bottom: 150px; right: 40px; border-color: #a0a0ff; color: #a0a0ff;">
-            ⚡
-        </div>
+        <div id="btn-hyperspace" class="drag-btn" style="bottom: 150px; right: 40px; border-color: #a0a0ff; color: #a0a0ff;">⚡</div>
         
-        <div id="btn-pause" class="drag-btn interactive" style="top: 20px; left: 20px; width: 50px; height: 50px; font-size: 1rem;">
-            II
-        </div>
+        <div id="btn-pause" class="drag-btn" style="top: 20px; left: 20px; width: 50px; height: 50px; font-size: 1rem;">II</div>
         
-        <div id="btn-music" class="drag-btn interactive" style="top: 20px; right: 20px; width: 50px; height: 50px; font-size: 1rem;">
-            ♫
-        </div>
+        <div id="btn-music" class="drag-btn" style="top: 20px; right: 20px; width: 50px; height: 50px; font-size: 1rem;">♫</div>
     </div>
 
     <div id="start-screen" class="ui-layer interactive hidden" style="z-index: 50;">
@@ -171,21 +154,13 @@
             
             <div class="bg-black/80 p-4 rounded border border-gray-700 mb-6 w-full text-left">
                 <h3 class="text-red-500 font-bold mb-3 border-b border-gray-700 pb-1 text-sm text-center">CONTROLS SETUP</h3>
-                
                 <div class="toggle-row">
                     <span class="text-xs text-gray-300">ENABLE TOUCH BUTTONS</span>
-                    <label class="switch">
-                        <input type="checkbox" id="touch-toggle">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="touch-toggle"><span class="slider"></span></label>
                 </div>
-
                 <div class="toggle-row">
                     <span class="text-xs text-yellow-500 font-bold">CUSTOMIZE LAYOUT (DRAG)</span>
-                    <label class="switch">
-                        <input type="checkbox" id="edit-toggle">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="edit-toggle"><span class="slider"></span></label>
                 </div>
             </div>
             
@@ -216,7 +191,7 @@
 
 <script>
 /**
- * MORGAN'S FURY 2112 - FIXED TOUCH ENGINE
+ * MORGAN'S FURY 2112 - COMPLETE ENGINE
  */
 
 // --- GLOBAL VARIABLES ---
@@ -233,8 +208,11 @@ let isEditMode = false;
 let score = 0;
 let lives = 3;
 let level = 1;
+let saucersSpawnedCount = 0;
+let saucer = null;
+let saucerTimer = 0;
 
-// Inputs (Keyboard & Touch Mapping)
+// Inputs
 const keys = { 
     ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, 
     Control: false, Alt: false, Shift: false, ' ': false 
@@ -243,11 +221,26 @@ const keys = {
 // Entities
 let player;
 let projectiles = [];
+let enemyProjectiles = [];
 let asteroids = [];
 let particles = [];
 let stars = [];
+let floatingTexts = [];
 
-// --- CLASS DEFINITIONS ---
+// --- CLASSES ---
+
+class FloatingText {
+    constructor(x, y, text, color = '#fff') {
+        this.x = x; this.y = y; this.text = text; this.color = color;
+        this.life = 60; this.vy = -1;
+    }
+    update() { this.y += this.vy; this.life--; }
+    draw() {
+        ctx.save(); ctx.globalAlpha = Math.min(1, this.life/20);
+        ctx.fillStyle = this.color; ctx.font = 'bold 20px Orbitron';
+        ctx.fillText(this.text, this.x, this.y); ctx.restore();
+    }
+}
 
 class Star {
     constructor(mode = 'static') { this.init(mode); }
@@ -281,44 +274,29 @@ class Player {
     }
     update() {
         if(!this.visible) return;
-        
-        // --- ROTATION LOGIC ---
-        // Left (Control)
         if(keys.Control) this.angle -= 0.08;
-        // Right (Alt)
         if(keys.Alt) this.angle += 0.08;
-
-        // --- THRUST LOGIC ---
         this.thrusting = keys.ArrowDown;
         
         if(this.thrusting) {
             this.vx += Math.cos(this.angle) * 0.15;
             this.vy += Math.sin(this.angle) * 0.15;
-            // Thruster Particles
             if(Math.random()>0.5) particles.push(new Particle(this.x - Math.cos(this.angle)*15, this.y - Math.sin(this.angle)*15, '#ffaa00'));
-            AudioEngine.playThrust();
+            AudioEngine.startThrust();
         } else {
             AudioEngine.stopThrust();
         }
-
-        // Physics
         this.vx *= 0.99; this.vy *= 0.99;
         this.x += this.vx; this.y += this.vy;
-
-        // Wrap
         if(this.x < -15) this.x = canvas.width+15; if(this.x > canvas.width+15) this.x = -15;
         if(this.y < -15) this.y = canvas.height+15; if(this.y > canvas.height+15) this.y = -15;
     }
     draw() {
         if(!this.visible) return;
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillStyle = '#000';
-        // Ship Body
         ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-15, 12); ctx.lineTo(-10,0); ctx.lineTo(-15,-12); ctx.closePath();
         ctx.fill(); ctx.stroke();
-        // Flame
         if(this.thrusting) {
             ctx.fillStyle = '#ffaa00';
             ctx.beginPath(); ctx.moveTo(-12,6); ctx.lineTo(-25 - Math.random()*5, 0); ctx.lineTo(-12,-6); ctx.fill();
@@ -334,16 +312,18 @@ class Player {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.vx = 0; this.vy = 0;
-        AudioEngine.warp();
+        AudioEngine.playWarp();
     }
 }
 
 class Projectile {
-    constructor(x, y, angle) {
+    constructor(x, y, angle, isEnemy=false) {
         this.x = x; this.y = y;
-        this.vx = Math.cos(angle) * 14;
-        this.vy = Math.sin(angle) * 14;
+        this.speed = isEnemy ? 8 : 14;
+        this.vx = Math.cos(angle) * this.speed;
+        this.vy = Math.sin(angle) * this.speed;
         this.life = 60;
+        this.color = isEnemy ? '#f00' : '#fff';
     }
     update() {
         this.x += this.vx; this.y += this.vy; this.life--;
@@ -351,7 +331,44 @@ class Projectile {
         if(this.y < 0) this.y = canvas.height; if(this.y > canvas.height) this.y = 0;
     }
     draw() {
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+    }
+}
+
+class Saucer {
+    constructor() {
+        this.radius = 20;
+        this.y = Math.random() * (canvas.height - 100) + 50;
+        this.x = (Math.random() < 0.5) ? -30 : canvas.width + 30;
+        this.vx = (this.x < 0) ? 2 + Math.random() : -2 - Math.random();
+        this.vy = (Math.random()-0.5)*2;
+        this.markedForDeletion = false;
+        this.timer = 0;
+        AudioEngine.saucerSpawn();
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        this.timer++;
+        if(this.timer > 100) {
+            if(player && player.visible) {
+                const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                enemyProjectiles.push(new Projectile(this.x, this.y, angle, true));
+                AudioEngine.saucerFire();
+            }
+            this.timer = 0;
+        }
+        if((this.vx > 0 && this.x > canvas.width + 50) || (this.vx < 0 && this.x < -50)) {
+            this.markedForDeletion = true;
+            AudioEngine.stopSaucerSound();
+        }
+    }
+    draw() {
+        ctx.strokeStyle = '#f00'; ctx.lineWidth = 2;
+        ctx.beginPath(); 
+        ctx.moveTo(this.x-15, this.y); ctx.lineTo(this.x+15, this.y);
+        ctx.moveTo(this.x-8, this.y-8); ctx.lineTo(this.x+8, this.y-8); ctx.lineTo(this.x+15, this.y);
+        ctx.lineTo(this.x-15, this.y); ctx.lineTo(this.x-8, this.y-8);
+        ctx.stroke();
     }
 }
 
@@ -395,12 +412,55 @@ class Particle {
     draw() { ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
 }
 
-// --- AUDIO SYSTEM ---
+// --- AUDIO SYSTEM (FULL RESTORATION) ---
+const MusicManager = {
+    menuTrack: new Audio('https://kenmorganrealestate.github.io/mygames/overture.mp3'),
+    playlistUrls: [
+        'https://kenmorganrealestate.github.io/mygames/limelight.mp3',
+        'https://kenmorganrealestate.github.io/mygames/somethingfornothing.mp3',
+        'https://kenmorganrealestate.github.io/mygames/stickitout.mp3',
+        'https://kenmorganrealestate.github.io/mygames/syrnix.mp3',
+        'https://kenmorganrealestate.github.io/mygames/twilightzone.mp3'
+    ],
+    outroTrack: new Audio('https://kenmorganrealestate.github.io/mygames/outro2112.mp3'),
+    currentTrack: null,
+    isPlayingGameMusic: false,
+    volume: 0.3, 
+    init() {
+        this.menuTrack.loop = true;
+        this.menuTrack.volume = this.volume;
+    },
+    playMenu() {
+        this.stopGameMusic(); this.stopOutro();
+        this.menuTrack.play().catch(e=>console.log(e));
+    },
+    stopMenu() { this.menuTrack.pause(); this.menuTrack.currentTime = 0; },
+    playRandomGameTrack() {
+        this.stopMenu();
+        if(this.currentTrack) this.currentTrack.pause();
+        const url = this.playlistUrls[Math.floor(Math.random()*this.playlistUrls.length)];
+        this.currentTrack = new Audio(url);
+        this.currentTrack.volume = this.volume;
+        this.currentTrack.play().catch(e=>console.log(e));
+        this.currentTrack.onended = () => this.playRandomGameTrack();
+        
+        // Show visual feedback
+        const name = url.split('/').pop().replace('.mp3', '').toUpperCase();
+        floatingTexts.push(new FloatingText(canvas.width/2, 50, "PLAYING: " + name, "#00ff00"));
+    },
+    stopGameMusic() { if(this.currentTrack) { this.currentTrack.pause(); } },
+    playOutro() { this.stopGameMusic(); this.stopMenu(); this.outroTrack.play().catch(e=>console.log(e)); },
+    stopOutro() { this.outroTrack.pause(); this.outroTrack.currentTime = 0; }
+};
+
 const AudioEngine = {
     ctx: null,
-    rocketSound: null, // We need a continuous oscillator for thrust
+    rocketSound: new Audio('https://kenmorganrealestate.github.io/mygames/rocket.mp3'),
+    saucerSound: new Audio('https://kenmorganrealestate.github.io/mygames/2112Ringtone.mp3'),
     init() { 
         this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+        this.rocketSound.loop = true; this.rocketSound.volume = 0.5;
+        this.saucerSound.loop = true; this.saucerSound.volume = 0.6;
     },
     tone(freq, type, dur, vol=0.1) {
         if(!this.ctx) return;
@@ -412,108 +472,87 @@ const AudioEngine = {
         o.start(); o.stop(this.ctx.currentTime + dur);
     },
     shoot() { this.tone(880, 'sawtooth', 0.15); },
-    explode() { this.tone(100, 'square', 0.4, 0.3); },
-    warp() { this.tone(500, 'sine', 0.5, 0.2); },
-    playThrust() {
-        // Simple thrust sound simulation
-        if(!this.ctx) return;
-        // In a real implementation we would loop a buffer, here we just skip to avoid overhead in this single file demo
+    explode() { 
+        // Simple noise burst simulation
+        this.tone(100, 'square', 0.4, 0.3);
+        this.tone(50, 'sawtooth', 0.4, 0.3);
     },
-    stopThrust() {},
-    playMusic() {
-        // Placeholder for music logic
-        const songNames = ["LIMELIGHT", "SYRINX", "RED BARCHETTA"];
-        const song = songNames[Math.floor(Math.random()*songNames.length)];
-        // Create a visual indicator that music changed
-        const hud = document.getElementById('level-hud');
-        const originalText = hud.innerText;
-        hud.innerText = "TRACK: " + song;
-        hud.style.color = "#00ff00";
-        setTimeout(() => { hud.innerText = originalText; hud.style.color = "#bf0000"; }, 2000);
-    }
+    playWarp() { 
+        this.tone(500, 'sine', 0.5, 0.2); 
+        this.tone(1500, 'sine', 0.5, 0.1); 
+    },
+    startThrust() { if(this.rocketSound.paused) this.rocketSound.play().catch(e=>{}); },
+    stopThrust() { if(!this.rocketSound.paused) { this.rocketSound.pause(); this.rocketSound.currentTime=0; } },
+    saucerSpawn() { this.saucerSound.play().catch(e=>{}); },
+    stopSaucerSound() { this.saucerSound.pause(); this.saucerSound.currentTime=0; },
+    saucerFire() { this.tone(1200, 'sine', 0.1, 0.2); }
 };
 
-// --- TOUCH INTERFACE LOGIC (REBUILT) ---
-// We handle Game Action listeners separately from Drag listeners to ensure they don't conflict.
+// --- TOUCH INTERFACE LOGIC (POINTER EVENTS) ---
 
 const touchInterface = document.getElementById('touch-interface');
 const touchToggle = document.getElementById('touch-toggle');
 const editToggle = document.getElementById('edit-toggle');
 const dragButtons = document.querySelectorAll('.drag-btn');
 
-// 1. Dragging Logic (Only active when Edit Mode is ON)
+// 1. Dragging Logic (Edit Mode)
 function setupDrag(el) {
     let offsetX, offsetY;
-    el.addEventListener('touchstart', (e) => {
+    el.addEventListener('pointerdown', (e) => {
         if(!isEditMode) return;
-        e.preventDefault(); // Stop scrolling
-        const touch = e.touches[0];
+        el.setPointerCapture(e.pointerId);
         const rect = el.getBoundingClientRect();
-        offsetX = touch.clientX - rect.left;
-        offsetY = touch.clientY - rect.top;
-    }, {passive: false});
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        el.dataset.dragging = "true";
+    });
 
-    el.addEventListener('touchmove', (e) => {
-        if(!isEditMode) return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        el.style.left = (touch.clientX - offsetX) + 'px';
-        el.style.top = (touch.clientY - offsetY) + 'px';
-        el.style.bottom = 'auto'; 
-        el.style.right = 'auto';
-    }, {passive: false});
+    el.addEventListener('pointermove', (e) => {
+        if(!isEditMode || el.dataset.dragging !== "true") return;
+        el.style.left = (e.clientX - offsetX) + 'px';
+        el.style.top = (e.clientY - offsetY) + 'px';
+        el.style.bottom = 'auto'; el.style.right = 'auto';
+    });
+
+    el.addEventListener('pointerup', (e) => {
+        el.dataset.dragging = "false";
+        el.releasePointerCapture(e.pointerId);
+    });
 }
 
-// 2. Game Action Logic (Only active when Edit Mode is OFF)
+// 2. Game Action Logic (Play Mode)
 function setupGameAction(id, keyMap) {
     const el = document.getElementById(id);
     
     const press = (e) => {
-        if(isEditMode) return; // Don't shoot while dragging
-        e.preventDefault(); // CRITICAL: Prevents mouse emulation and scrolling
+        if(isEditMode) return; 
+        e.preventDefault(); 
+        el.classList.add('pressed'); 
         
-        el.classList.add('pressed'); // Visual feedback
-        
-        // Handle Action
-        if(keyMap === 'SHOOT') {
-            if(player && !isPaused) player.shoot();
-        } else if (keyMap === 'HYPERSPACE') {
-            if(player && !isPaused) player.hyperspace();
-        } else if (keyMap === 'PAUSE') {
-            isPaused = !isPaused;
-        } else if (keyMap === 'MUSIC') {
-            AudioEngine.playMusic();
-        } else {
-            // It's a continuous key (rotate/thrust)
-            keys[keyMap] = true;
-        }
+        if(keyMap === 'SHOOT') { if(player && !isPaused) player.shoot(); } 
+        else if (keyMap === 'HYPERSPACE') { if(player && !isPaused) player.hyperspace(); } 
+        else if (keyMap === 'PAUSE') { isPaused = !isPaused; } 
+        else if (keyMap === 'MUSIC') { MusicManager.playRandomGameTrack(); } 
+        else { keys[keyMap] = true; } // Continuous keys
     };
 
     const release = (e) => {
         if(isEditMode) return;
         e.preventDefault();
-        
         el.classList.remove('pressed');
-        
-        if(keyMap !== 'SHOOT' && keyMap !== 'HYPERSPACE' && keyMap !== 'PAUSE' && keyMap !== 'MUSIC') {
+        if(['SHOOT','HYPERSPACE','PAUSE','MUSIC'].indexOf(keyMap) === -1) {
             keys[keyMap] = false;
         }
     };
 
-    // Attach robust listeners
-    el.addEventListener('touchstart', press, {passive: false});
-    el.addEventListener('touchend', release, {passive: false});
-    el.addEventListener('touchcancel', release, {passive: false});
-    
-    // Mouse fallback for testing on desktop
-    el.addEventListener('mousedown', press);
-    el.addEventListener('mouseup', release);
-    el.addEventListener('mouseleave', release);
+    el.addEventListener('pointerdown', press);
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointerleave', release);
+    el.addEventListener('pointercancel', release);
 }
 
 // Initialize Buttons
 dragButtons.forEach(btn => setupDrag(btn));
-
 setupGameAction('btn-left', 'Control');
 setupGameAction('btn-right', 'Alt');
 setupGameAction('btn-thrust', 'ArrowDown');
@@ -523,7 +562,7 @@ setupGameAction('btn-pause', 'PAUSE');
 setupGameAction('btn-music', 'MUSIC');
 
 
-// --- MENU / UI HANDLERS ---
+// --- UI HANDLERS ---
 touchToggle.addEventListener('change', (e) => {
     if(e.target.checked) touchInterface.classList.remove('hidden');
     else touchInterface.classList.add('hidden');
@@ -537,6 +576,8 @@ editToggle.addEventListener('change', (e) => {
 
 document.getElementById('init-audio-btn').addEventListener('click', () => {
     AudioEngine.init();
+    MusicManager.init();
+    MusicManager.playMenu();
     document.getElementById('audio-wall').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
     
@@ -555,6 +596,7 @@ document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('restart-btn').addEventListener('click', startGame);
 document.getElementById('return-menu-btn').addEventListener('click', () => {
     gameState = 'MENU';
+    MusicManager.playMenu();
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('start-screen').classList.remove('hidden');
     initStars('warp');
@@ -578,8 +620,14 @@ function startGame() {
     score = 0;
     lives = 3;
     level = 1;
+    saucer = null;
+    saucerTimer = 0;
+    
+    MusicManager.playRandomGameTrack();
+    
     player = new Player();
     projectiles = [];
+    enemyProjectiles = [];
     asteroids = [];
     particles = [];
     
@@ -611,9 +659,38 @@ function loop() {
     if(gameState === 'PLAYING' && !isPaused) {
         if(player) { player.update(); player.draw(); }
         
+        // Saucer Logic
+        if(!saucer) {
+            saucerTimer++;
+            if(saucerTimer > 500 - (level*10)) {
+                saucer = new Saucer();
+                saucerTimer = 0;
+            }
+        } else {
+            saucer.update(); saucer.draw();
+            if(saucer.markedForDeletion) saucer = null;
+            // Player hit Saucer
+            if(saucer && player.visible && Math.hypot(player.x-saucer.x, player.y-saucer.y) < 30) {
+                player.visible = false; lives--; AudioEngine.explode();
+                saucer = null;
+                checkGameOver();
+            }
+        }
+
+        // Projectiles
         projectiles.forEach((p,i) => {
             p.update(); p.draw();
             if(p.life<=0) projectiles.splice(i,1);
+        });
+
+        enemyProjectiles.forEach((p,i) => {
+            p.update(); p.draw();
+            if(p.life<=0) enemyProjectiles.splice(i,1);
+            if(player.visible && Math.hypot(p.x-player.x, p.y-player.y) < 15) {
+                player.visible = false; lives--; AudioEngine.explode();
+                enemyProjectiles.splice(i,1);
+                checkGameOver();
+            }
         });
 
         asteroids.forEach((a,ai) => {
@@ -635,24 +712,21 @@ function loop() {
                     }
                 }
             });
+            
+            // Saucer hit Asteroid
+            if(saucer && Math.hypot(saucer.x-a.x, saucer.y-a.y) < a.radius + 15) {
+                 saucer = null; AudioEngine.explode();
+                 asteroids.splice(ai,1);
+            }
 
             // Hit Player
             if(player.visible && Math.hypot(player.x-a.x, player.y-a.y) < player.radius + a.radius) {
                 AudioEngine.explode();
                 player.visible = false;
                 lives--;
-                document.getElementById('lives-val').innerText = lives;
-                
                 // Sparks on death
                 for(let k=0; k<20; k++) particles.push(new Particle(player.x, player.y, '#ff4444'));
-
-                if(lives < 0) {
-                    gameState = 'GAMEOVER';
-                    document.getElementById('final-score').innerText = score;
-                    document.getElementById('game-over-screen').classList.remove('hidden');
-                } else {
-                    setTimeout(() => { player.visible = true; player.x = canvas.width/2; player.y = canvas.height/2; player.vx=0; player.vy=0; }, 2000);
-                }
+                checkGameOver();
             }
         });
         
@@ -660,9 +734,14 @@ function loop() {
             p.update(); p.draw();
             if(p.life<=0) particles.splice(i,1);
         });
+        
+        floatingTexts.forEach((f,i) => {
+            f.update(); f.draw();
+            if(f.life<=0) floatingTexts.splice(i,1);
+        });
 
         // Level clear check
-        if(asteroids.length === 0 && gameState === 'PLAYING') {
+        if(asteroids.length === 0 && !saucer && gameState === 'PLAYING') {
             level++;
             score += 1000;
             // Add more asteroids
@@ -671,7 +750,23 @@ function loop() {
 
         // HUD Update
         document.getElementById('score-val').innerText = score;
+        document.getElementById('lives-val').innerText = lives;
         document.getElementById('level-val').innerText = level;
+    }
+}
+
+function checkGameOver() {
+    if(lives < 0) {
+        gameState = 'GAMEOVER';
+        MusicManager.playOutro();
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('game-over-screen').classList.remove('hidden');
+    } else {
+        setTimeout(() => { 
+            if(gameState === 'PLAYING') {
+                player.visible = true; player.x = canvas.width/2; player.y = canvas.height/2; player.vx=0; player.vy=0; 
+            }
+        }, 2000);
     }
 }
 
